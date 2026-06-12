@@ -200,12 +200,10 @@ body::before{content:'';position:fixed;inset:0;pointer-events:none;z-index:-1;
 
 .reader-main{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:24px 32px;position:relative;overflow:hidden}
 .rd-illust{width:100%;max-width:480px;height:240px;border-radius:16px;margin-bottom:20px;position:relative;overflow:hidden}
-.rd-illust .scene-bg{position:absolute;inset:0;transition:opacity .6s}
-.rd-illust .scene-img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:0;transition:opacity .5s}
-.rd-illust .scene-img.show{opacity:1}
-.rd-illust .scene-emoji{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
-  font-size:64px;text-shadow:0 8px 32px rgba(0,0,0,.4);transition:opacity .5s,transform .5s}
-.rd-illust .stars span{position:absolute;width:2px;height:2px;background:#fff;border-radius:50%;opacity:.5}
+.rd-illust .scene-bg{position:absolute;inset:0}
+.rd-illust .scene-img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+.rd-illust .scene-emoji{display:none}
+.rd-illust .stars{display:none}
 .rd-text{font-size:18px;font-weight:500;max-width:500px;text-align:center;line-height:1.8;margin-bottom:6px;
   transition:opacity .4s;letter-spacing:-.2px}
 .rd-text .w{cursor:pointer;border-bottom:2px solid transparent;transition:.2s;padding:0 1px}
@@ -595,8 +593,6 @@ body::before{content:'';position:fixed;inset:0;pointer-events:none;z-index:-1;
         </div>
         <div class="s5-actions">
           <button class="s5-btn primary" onclick="goStep(1)">✨ 再创作一本</button>
-          <button class="s5-btn ghost">🏠 回到书架</button>
-          <button class="s5-btn ghost">🎮 单词消消乐</button>
         </div>
       </div>
     </div>
@@ -806,6 +802,8 @@ function startGenAnimation(){
 // ═══════════════════════════════════════
 //  SCREEN 4: READER
 // ═══════════════════════════════════════
+for(let i=1;i<=8;i++){const im=new Image();im.src='assets/page'+i+'.png';}
+
 function initReader(){
   currentPage=0;
   showTrans=false;
@@ -817,12 +815,8 @@ function initReader(){
 
 function renderPage(){
   const pg=pages[currentPage];
-  document.getElementById('sceneEmoji').textContent=pg.emoji;
   document.getElementById('sceneBg').style.background=pg.bg;
-  const sceneImg=document.getElementById('sceneImg');
-  sceneImg.classList.remove('show');
-  sceneImg.src='assets/page'+(currentPage+1)+'.png';
-  sceneImg.onload=()=>sceneImg.classList.add('show');
+  document.getElementById('sceneImg').src='assets/page'+(currentPage+1)+'.png';
   document.getElementById('rdText').innerHTML=pg.en;
   document.getElementById('rdTrans').textContent=pg.zh;
   document.getElementById('pgNum').textContent=(currentPage+1)+' / '+pages.length;
