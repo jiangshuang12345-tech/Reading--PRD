@@ -1,0 +1,915 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>🦖 Dino AI 绘本工坊 · Interactive PRD v0.1</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Noto+Sans+SC:wght@300;400;500;700;900&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#06060e;--bg2:#0c0c1a;
+  --s1:#111128;--s2:#16163a;--s3:#1e1e4a;--s4:#252560;
+  --glass:rgba(17,17,40,.6);--glass2:rgba(30,30,74,.4);
+  --border:rgba(120,100,255,.12);--border2:rgba(120,100,255,.25);--border3:rgba(120,100,255,.4);
+  --t1:#f0eeff;--t2:#b8b0e0;--t3:#7a72a8;--t4:#4d4578;
+  --p:#7c5cfc;--p2:#a78bfa;--p3:#c4b5fd;--p-glow:rgba(124,92,252,.12);--p-glow2:rgba(124,92,252,.25);
+  --g:#34d399;--g2:#6ee7b7;--o:#fb923c;--o2:#fdba74;
+  --pk:#f472b6;--pk2:#f9a8d4;--b:#60a5fa;--b2:#93c5fd;
+  --r:#f87171;--cy:#22d3ee;--y:#fbbf24;
+  --radius:20px;--radius2:14px;--radius3:10px;--radius4:6px;
+  --font:'Inter','Noto Sans SC',system-ui,sans-serif;
+  --mono:'SF Mono','Fira Code',monospace;
+}
+html{scroll-behavior:smooth;font-size:16px}
+body{font-family:var(--font);background:var(--bg);color:var(--t1);line-height:1.75;overflow-x:hidden;
+  -webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale}
+::selection{background:var(--p);color:#fff}
+img{max-width:100%;display:block}
+a{color:var(--p2);text-decoration:none}
+
+/* ═══════ GLOBAL AMBIENT ═══════ */
+body::before{content:'';position:fixed;inset:0;pointer-events:none;z-index:-1;
+  background:
+    radial-gradient(ellipse 80% 60% at 20% 10%,rgba(124,92,252,.06),transparent 60%),
+    radial-gradient(ellipse 60% 50% at 80% 90%,rgba(244,114,182,.04),transparent 50%),
+    radial-gradient(ellipse 70% 40% at 50% 50%,rgba(34,211,238,.03),transparent 50%)}
+
+/* ═══════ NAV ═══════ */
+.nav{position:fixed;top:0;left:0;right:0;z-index:1000;
+  background:rgba(6,6,14,.7);backdrop-filter:blur(24px) saturate(1.4);
+  border-bottom:1px solid var(--border);transition:.3s}
+.nav-inner{max-width:1200px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;padding:0 40px;height:60px}
+.nav-brand{display:flex;align-items:center;gap:10px;font-weight:700;font-size:15px;color:var(--t1);letter-spacing:-.3px}
+.nav-brand .logo{width:28px;height:28px;background:linear-gradient(135deg,var(--p),#9333ea);border-radius:8px;
+  display:flex;align-items:center;justify-content:center;font-size:16px}
+.nav-version{font-size:10px;font-weight:600;color:var(--p2);border:1px solid var(--border2);
+  padding:2px 8px;border-radius:20px;letter-spacing:.5px}
+.nav-links{display:flex;gap:2px}
+.nav-links a{color:var(--t3);font-size:13px;font-weight:500;padding:6px 14px;border-radius:8px;transition:.2s;letter-spacing:-.2px}
+.nav-links a:hover{color:var(--t1);background:var(--glass2)}
+.nav-links a.active{color:var(--p2);background:var(--p-glow)}
+
+/* ═══════ HERO ═══════ */
+.hero{position:relative;padding:140px 40px 100px;max-width:1000px;margin:0 auto;text-align:center;overflow:hidden}
+.hero::before{content:'';position:absolute;top:-200px;left:50%;transform:translateX(-50%);
+  width:800px;height:800px;border-radius:50%;
+  background:radial-gradient(circle,rgba(124,92,252,.12) 0%,rgba(124,92,252,.04) 40%,transparent 70%);
+  pointer-events:none}
+.hero-chip{display:inline-flex;align-items:center;gap:8px;
+  background:linear-gradient(135deg,rgba(124,92,252,.12),rgba(167,139,250,.08));
+  border:1px solid var(--border2);padding:8px 20px;border-radius:100px;
+  font-size:13px;font-weight:500;color:var(--p2);margin-bottom:32px;
+  backdrop-filter:blur(8px)}
+.hero-chip .dot{width:6px;height:6px;border-radius:50%;background:var(--g);animation:pulse 2s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+.hero h1{font-size:clamp(36px,5.5vw,60px);font-weight:900;line-height:1.15;letter-spacing:-1.5px;margin-bottom:20px}
+.hero h1 .grad1{background:linear-gradient(135deg,#f0eeff 20%,var(--p2) 80%);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.hero h1 .grad2{background:linear-gradient(135deg,var(--p) 0%,var(--pk) 50%,var(--o) 100%);
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.hero-desc{font-size:17px;color:var(--t2);max-width:600px;margin:0 auto 44px;line-height:1.8;font-weight:400}
+.hero-actions{display:flex;gap:16px;justify-content:center;flex-wrap:wrap}
+.btn{display:inline-flex;align-items:center;gap:8px;padding:14px 32px;border-radius:12px;
+  font-size:14px;font-weight:600;cursor:pointer;border:none;transition:.3s;text-decoration:none;letter-spacing:-.2px}
+.btn-primary{background:linear-gradient(135deg,var(--p),#9333ea 70%);color:#fff;
+  box-shadow:0 4px 20px rgba(124,92,252,.4),0 0 0 1px rgba(124,92,252,.3) inset}
+.btn-primary:hover{transform:translateY(-2px);box-shadow:0 8px 32px rgba(124,92,252,.5),0 0 0 1px rgba(124,92,252,.4) inset}
+.btn-ghost{background:var(--glass);border:1px solid var(--border2);color:var(--t1);backdrop-filter:blur(8px)}
+.btn-ghost:hover{border-color:var(--border3);background:var(--glass2)}
+.hero-stats{display:flex;gap:40px;justify-content:center;margin-top:60px;padding-top:40px;border-top:1px solid var(--border)}
+.hero-stat{text-align:center}
+.hero-stat .val{font-size:28px;font-weight:800;letter-spacing:-1px}
+.hero-stat .val.c1{color:var(--p2)}.hero-stat .val.c2{color:var(--g)}.hero-stat .val.c3{color:var(--o)}
+.hero-stat .lab{font-size:12px;color:var(--t3);margin-top:2px;font-weight:500}
+
+/* ═══════ SECTIONS ═══════ */
+.sec{padding:100px 40px;max-width:1000px;margin:0 auto}
+.sec-label{display:inline-flex;align-items:center;gap:8px;font-size:11px;font-weight:700;
+  color:var(--p2);text-transform:uppercase;letter-spacing:2px;margin-bottom:16px}
+.sec-label .num{background:var(--p-glow);border:1px solid var(--border2);padding:3px 10px;border-radius:6px;font-size:10px}
+.sec h2{font-size:clamp(28px,4vw,42px);font-weight:800;letter-spacing:-1px;margin-bottom:12px;line-height:1.2}
+.sec h3{font-size:22px;font-weight:700;margin:48px 0 16px;letter-spacing:-.5px;color:var(--t1)}
+.sec h4{font-size:16px;font-weight:600;margin:32px 0 12px;color:var(--p3)}
+.sec>p{color:var(--t2);margin-bottom:12px;font-size:15px}
+.sec blockquote{position:relative;padding:20px 28px;margin:20px 0;
+  background:linear-gradient(135deg,var(--p-glow),rgba(167,139,250,.06));
+  border:1px solid var(--border2);border-radius:var(--radius3);font-size:15px;color:var(--t1)}
+.sec blockquote::before{content:'';position:absolute;left:0;top:0;bottom:0;width:3px;
+  background:linear-gradient(180deg,var(--p),var(--pk));border-radius:3px 0 0 3px}
+.divider{border:none;height:1px;background:linear-gradient(90deg,transparent,var(--border2),transparent);margin:0}
+
+/* ═══════ CARDS ═══════ */
+.card{background:var(--glass);backdrop-filter:blur(12px);
+  border:1px solid var(--border);border-radius:var(--radius);padding:32px;transition:.35s}
+.card:hover{border-color:var(--border2);box-shadow:0 8px 40px rgba(124,92,252,.06)}
+.grid{display:grid;gap:16px;margin:24px 0}
+.g2{grid-template-columns:repeat(2,1fr)}.g3{grid-template-columns:repeat(3,1fr)}.g4{grid-template-columns:repeat(4,1fr)}
+
+/* ═══════ PAIN POINTS ═══════ */
+.pain{background:var(--glass);border:1px solid var(--border);border-radius:var(--radius2);padding:28px;text-align:center;transition:.3s}
+.pain:hover{border-color:var(--border2);transform:translateY(-4px)}
+.pain .ico{font-size:36px;margin-bottom:12px;filter:drop-shadow(0 4px 12px rgba(124,92,252,.2))}
+.pain h5{font-size:15px;font-weight:700;margin-bottom:6px}
+.pain p{font-size:13px;color:var(--t3);margin:0;line-height:1.6}
+
+/* ═══════ GOAL BOX ═══════ */
+.goals{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin:24px 0}
+.goal{background:var(--glass);border:1px solid var(--border);border-radius:var(--radius2);padding:24px;text-align:center}
+.goal .label{font-size:11px;font-weight:600;color:var(--t3);text-transform:uppercase;letter-spacing:1px;margin-bottom:8px}
+.goal .value{font-size:14px;font-weight:600;color:var(--t1);line-height:1.6}
+
+/* ═══════ METHOD CARDS ═══════ */
+.methods{display:grid;grid-template-columns:repeat(3,1fr);gap:20px;margin:32px 0}
+.method{position:relative;background:var(--glass);border:1px solid var(--border);border-radius:var(--radius);
+  padding:36px 28px;overflow:hidden;transition:.4s;cursor:default}
+.method::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;transition:.3s}
+.method.m1::before{background:linear-gradient(90deg,var(--b),var(--cy))}
+.method.m2::before{background:linear-gradient(90deg,var(--g),var(--y))}
+.method.m3::before{background:linear-gradient(90deg,var(--pk),var(--o))}
+.method::after{content:'';position:absolute;top:0;left:0;right:0;bottom:0;opacity:0;transition:.4s;pointer-events:none}
+.method.m1::after{background:radial-gradient(circle at 50% 0%,rgba(96,165,250,.06),transparent 60%)}
+.method.m2::after{background:radial-gradient(circle at 50% 0%,rgba(52,211,153,.06),transparent 60%)}
+.method.m3::after{background:radial-gradient(circle at 50% 0%,rgba(244,114,182,.06),transparent 60%)}
+.method:hover{transform:translateY(-6px);border-color:var(--border2);box-shadow:0 20px 60px rgba(0,0,0,.3)}
+.method:hover::after{opacity:1}
+.method:hover::before{height:4px}
+.method .m-icon{font-size:44px;margin-bottom:16px;position:relative;z-index:1}
+.method h4{font-size:18px;font-weight:700;margin-bottom:4px;position:relative;z-index:1}
+.method .m-sub{font-size:13px;color:var(--t3);margin-bottom:20px;line-height:1.6;position:relative;z-index:1}
+.method .scenario{background:var(--s1);border:1px solid var(--border);border-radius:var(--radius4);
+  padding:10px 14px;margin:8px 0;font-size:12.5px;color:var(--t2);position:relative;z-index:1;transition:.2s}
+.method .scenario:hover{border-color:var(--border2);background:var(--s2)}
+.method .scenario strong{color:var(--t1)}
+.tags{display:flex;flex-wrap:wrap;gap:6px;margin-top:16px;position:relative;z-index:1}
+.tag{font-size:11px;padding:4px 10px;border-radius:20px;font-weight:600}
+.tag.pro{background:rgba(52,211,153,.1);color:var(--g);border:1px solid rgba(52,211,153,.2)}
+.tag.con{background:rgba(251,146,60,.08);color:var(--o);border:1px solid rgba(251,146,60,.15)}
+
+/* ═══════ THEME PILLS ═══════ */
+.themes{display:flex;gap:10px;flex-wrap:wrap;margin:20px 0}
+.theme{background:var(--glass);border:1px solid var(--border);border-radius:100px;padding:10px 20px;
+  font-size:13px;color:var(--t2);cursor:pointer;transition:.25s;display:flex;align-items:center;gap:6px;font-weight:500}
+.theme:hover,.theme.on{border-color:var(--border3);color:var(--t1);background:var(--p-glow);box-shadow:0 0 20px var(--p-glow)}
+
+/* ═══════ COMPARE TABLE ═══════ */
+.tbl{width:100%;border-collapse:separate;border-spacing:0;margin:24px 0;font-size:13.5px;
+  border:1px solid var(--border);border-radius:var(--radius2);overflow:hidden}
+.tbl th{text-align:left;padding:14px 20px;background:var(--s2);color:var(--t1);font-weight:600;
+  border-bottom:1px solid var(--border);font-size:13px;letter-spacing:-.2px}
+.tbl td{padding:12px 20px;border-bottom:1px solid rgba(120,100,255,.06);color:var(--t2);transition:.15s}
+.tbl tr:last-child td{border-bottom:none}
+.tbl tr:hover td{background:rgba(124,92,252,.03)}
+.tbl td strong{color:var(--t1);font-weight:600}
+
+/* ═══════ STEPPER ═══════ */
+.stepper{display:flex;align-items:stretch;justify-content:center;gap:0;margin:48px 0;position:relative}
+.stp{display:flex;flex-direction:column;align-items:center;gap:10px;padding:16px 24px;flex:1;max-width:160px;position:relative}
+.stp-ring{width:64px;height:64px;border-radius:50%;display:flex;align-items:center;justify-content:center;
+  font-size:26px;background:var(--s1);border:2px solid var(--border);position:relative;transition:.3s;z-index:2}
+.stp.on .stp-ring{background:linear-gradient(135deg,var(--p),#9333ea);border-color:transparent;
+  box-shadow:0 0 32px rgba(124,92,252,.4)}
+.stp-name{font-size:13px;font-weight:700;color:var(--t1);letter-spacing:-.2px}
+.stp-desc{font-size:11px;color:var(--t3);text-align:center;line-height:1.4}
+.stp-line{flex:none;width:40px;height:2px;background:var(--border);align-self:center;margin-top:-28px;
+  background:linear-gradient(90deg,var(--border2),var(--border))}
+
+/* ═══════ DEVICE MOCKUP (iPad) ═══════ */
+.device{margin:32px auto;max-width:760px;position:relative}
+.device-frame{background:var(--s1);border:2px solid var(--border2);border-radius:24px;overflow:hidden;
+  box-shadow:0 24px 80px rgba(0,0,0,.5),0 0 0 1px rgba(255,255,255,.03) inset}
+.device-notch{display:flex;align-items:center;justify-content:space-between;padding:8px 20px;
+  background:linear-gradient(180deg,var(--s2),var(--s1));border-bottom:1px solid var(--border)}
+.device-notch .cam{width:8px;height:8px;border-radius:50%;background:var(--s3);border:1px solid var(--border2)}
+.device-notch .time{font-size:11px;color:var(--t3);font-weight:600}
+.device-screen{padding:0}
+
+/* Mockup content */
+.mk{padding:32px}
+.mk-header{display:flex;align-items:center;gap:12px;margin-bottom:24px}
+.mk-logo{width:40px;height:40px;background:linear-gradient(135deg,var(--p),#9333ea);border-radius:12px;
+  display:flex;align-items:center;justify-content:center;font-size:22px;
+  box-shadow:0 4px 16px rgba(124,92,252,.3)}
+.mk-title{font-size:20px;font-weight:800;letter-spacing:-.5px}
+.mk-sub{font-size:13px;color:var(--t3)}
+.mk-bubble{display:flex;align-items:flex-start;gap:12px;margin-bottom:28px;
+  background:linear-gradient(135deg,var(--p-glow),transparent);border:1px solid var(--border);
+  border-radius:var(--radius2);padding:16px 20px}
+.mk-bubble .avatar{width:36px;height:36px;border-radius:10px;background:linear-gradient(135deg,#34d399,#059669);
+  display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0}
+.mk-bubble .msg{font-size:14px;color:var(--t2);line-height:1.6}
+.mk-bubble .msg strong{color:var(--t1)}
+
+/* Input method selector */
+.mk-inputs{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:24px}
+.mk-inp{background:var(--s2);border:2px solid var(--border);border-radius:var(--radius2);padding:24px 16px;
+  text-align:center;cursor:pointer;transition:.3s;position:relative;overflow:hidden}
+.mk-inp::before{content:'';position:absolute;inset:0;opacity:0;transition:.3s}
+.mk-inp.m1::before{background:radial-gradient(circle at 50% 30%,rgba(96,165,250,.1),transparent 70%)}
+.mk-inp.m2::before{background:radial-gradient(circle at 50% 30%,rgba(52,211,153,.1),transparent 70%)}
+.mk-inp.m3::before{background:radial-gradient(circle at 50% 30%,rgba(244,114,182,.1),transparent 70%)}
+.mk-inp:hover{border-color:var(--border2);transform:translateY(-2px)}
+.mk-inp:hover::before{opacity:1}
+.mk-inp.sel{border-color:var(--p);background:var(--p-glow);box-shadow:0 0 24px var(--p-glow)}
+.mk-inp.sel::before{opacity:1}
+.mk-inp .inp-ico{font-size:32px;margin-bottom:10px;position:relative;z-index:1}
+.mk-inp .inp-name{font-size:14px;font-weight:700;color:var(--t1);margin-bottom:2px;position:relative;z-index:1}
+.mk-inp .inp-desc{font-size:11.5px;color:var(--t3);position:relative;z-index:1;line-height:1.4}
+
+/* Theme selector */
+.mk-themes{margin:20px 0}
+.mk-themes .label{font-size:12px;color:var(--t3);font-weight:600;margin-bottom:10px;display:flex;align-items:center;gap:6px}
+.mk-pills{display:flex;gap:8px;flex-wrap:wrap}
+.mk-pill{background:var(--s2);border:1px solid var(--border);border-radius:100px;padding:10px 18px;
+  font-size:12.5px;color:var(--t2);cursor:pointer;transition:.25s;font-weight:500}
+.mk-pill:hover{border-color:var(--border2);color:var(--t1);background:var(--s3)}
+.mk-pill.sel{border-color:var(--p);color:var(--p2);background:var(--p-glow);
+  box-shadow:0 0 16px var(--p-glow)}
+.mk-cta{display:flex;justify-content:center;margin-top:28px}
+
+/* Sample images */
+.mk-samples{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:20px}
+.mk-sample{display:flex;align-items:center;gap:12px;background:var(--s2);border:1px solid var(--border);
+  border-radius:var(--radius3);padding:14px;cursor:pointer;transition:.3s}
+.mk-sample:hover{border-color:var(--border2);transform:translateY(-2px);box-shadow:0 8px 24px rgba(0,0,0,.2)}
+.mk-sample .samp-img{width:56px;height:56px;border-radius:var(--radius4);display:flex;align-items:center;
+  justify-content:center;font-size:28px;flex-shrink:0}
+.mk-sample .samp-img.s1{background:linear-gradient(135deg,#3b1d0f,#6b3a1f)}
+.mk-sample .samp-img.s2{background:linear-gradient(135deg,#1a2a1a,#2d4a2d)}
+.mk-sample .samp-info .name{font-size:13px;font-weight:600;color:var(--t1)}
+.mk-sample .samp-info .size{font-size:11px;color:var(--t3)}
+.mk-sample .samp-btn{margin-left:auto;font-size:11px;color:var(--p2);font-weight:600;white-space:nowrap}
+
+/* ═══════ READER MOCKUP ═══════ */
+.reader-device{margin:32px auto;max-width:760px}
+.reader-frame{background:var(--s1);border:2px solid var(--border2);border-radius:24px;overflow:hidden;
+  box-shadow:0 24px 80px rgba(0,0,0,.5),0 0 0 1px rgba(255,255,255,.03) inset}
+.reader-bar{display:flex;align-items:center;justify-content:space-between;padding:12px 24px;
+  background:var(--s2);border-bottom:1px solid var(--border)}
+.reader-bar .rb-left{display:flex;align-items:center;gap:12px}
+.reader-bar .rb-back{font-size:13px;color:var(--t3);cursor:pointer;transition:.2s}
+.reader-bar .rb-back:hover{color:var(--p2)}
+.reader-bar .rb-title{font-size:14px;font-weight:700;color:var(--t1)}
+.reader-bar .rb-right{display:flex;gap:6px}
+.reader-bar .rb-btn{background:var(--s3);border:1px solid var(--border);border-radius:8px;
+  padding:6px 14px;font-size:12px;color:var(--t2);cursor:pointer;transition:.2s;font-weight:500}
+.reader-bar .rb-btn:hover{border-color:var(--border2);color:var(--t1)}
+
+.reader-canvas{position:relative;padding:40px;display:flex;flex-direction:column;align-items:center}
+.reader-illust{width:100%;max-width:520px;height:300px;border-radius:var(--radius2);margin-bottom:28px;
+  position:relative;overflow:hidden;
+  background:linear-gradient(135deg,#0a0a30 0%,#1a1040 30%,#2a1860 60%,#1a2050 100%)}
+.reader-illust .scene{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:80px;
+  text-shadow:0 8px 40px rgba(0,0,0,.5)}
+.reader-illust::after{content:'';position:absolute;inset:0;
+  background:radial-gradient(ellipse at 30% 40%,rgba(124,92,252,.12),transparent 50%),
+             radial-gradient(ellipse at 70% 60%,rgba(244,114,182,.08),transparent 40%);pointer-events:none}
+.reader-illust .stars{position:absolute;inset:0;overflow:hidden}
+.reader-illust .stars span{position:absolute;width:2px;height:2px;background:#fff;border-radius:50%;opacity:.6}
+
+.reader-sentence{font-size:20px;font-weight:500;color:var(--t1);max-width:540px;text-align:center;
+  line-height:1.8;margin-bottom:8px;letter-spacing:-.2px}
+.reader-sentence .w{cursor:pointer;border-bottom:2px solid transparent;transition:.2s;padding:0 1px}
+.reader-sentence .w:hover{color:var(--p2);border-bottom-color:var(--p)}
+.reader-sentence .w.hl{color:var(--p2);border-bottom-color:var(--p)}
+.reader-trans{font-size:14px;color:var(--t3);margin-bottom:24px;font-style:italic}
+
+/* Word popup */
+.word-popup{background:var(--s2);border:1px solid var(--border2);border-radius:var(--radius3);
+  padding:16px 20px;max-width:360px;margin:0 auto 20px;display:none;text-align:left;
+  box-shadow:0 8px 32px rgba(0,0,0,.3)}
+.word-popup.show{display:block;animation:popIn .3s ease}
+@keyframes popIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+.word-popup .wp-word{font-size:18px;font-weight:700;color:var(--p2);margin-bottom:4px;display:flex;align-items:center;gap:8px}
+.word-popup .wp-word .play{width:24px;height:24px;border-radius:50%;background:var(--p-glow);border:1px solid var(--border2);
+  display:flex;align-items:center;justify-content:center;font-size:11px;cursor:pointer}
+.word-popup .wp-phonetic{font-size:12px;color:var(--t3);font-family:var(--mono);margin-bottom:6px}
+.word-popup .wp-meaning{font-size:13px;color:var(--t2)}
+
+.reader-pager{display:flex;align-items:center;justify-content:center;gap:20px;padding:20px 24px;border-top:1px solid var(--border)}
+.reader-pager .pg-btn{background:var(--s2);border:1px solid var(--border);border-radius:10px;
+  padding:10px 20px;font-size:13px;color:var(--t2);cursor:pointer;transition:.2s;font-weight:500}
+.reader-pager .pg-btn:hover{border-color:var(--border2);color:var(--t1)}
+.reader-pager .dots{display:flex;gap:6px;align-items:center}
+.reader-pager .d{width:8px;height:8px;border-radius:50%;background:var(--s3);transition:.2s}
+.reader-pager .d.on{background:var(--p);box-shadow:0 0 8px rgba(124,92,252,.4)}
+.reader-pager .pg-num{font-size:13px;color:var(--t3);font-weight:600;min-width:48px;text-align:center}
+
+.reader-dino{display:flex;align-items:center;gap:14px;padding:14px 24px;background:var(--s2);border-top:1px solid var(--border)}
+.reader-dino .dino-av{width:40px;height:40px;border-radius:12px;
+  background:linear-gradient(135deg,#34d399,#059669);
+  display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0;
+  box-shadow:0 4px 12px rgba(52,211,153,.2)}
+.reader-dino .dino-txt{flex:1;font-size:13px;color:var(--t2);line-height:1.5}
+.reader-dino .dino-txt strong{color:var(--t1)}
+.reader-dino .dino-action{background:linear-gradient(135deg,var(--p),#9333ea);color:#fff;border:none;
+  border-radius:10px;padding:10px 18px;font-size:12px;font-weight:600;cursor:pointer;white-space:nowrap;
+  box-shadow:0 4px 12px rgba(124,92,252,.3)}
+
+/* ═══════ PIPELINE ═══════ */
+.pipeline{margin:32px 0;position:relative}
+.pipe{position:relative;background:var(--glass);border:1px solid var(--border);border-radius:var(--radius);
+  padding:28px 32px;margin-bottom:16px;transition:.3s}
+.pipe:hover{border-color:var(--border2)}
+.pipe-head{display:flex;align-items:center;gap:12px;margin-bottom:10px}
+.pipe-badge{font-size:10px;font-weight:700;color:var(--p2);text-transform:uppercase;letter-spacing:1px;
+  background:var(--p-glow);border:1px solid var(--border2);padding:4px 12px;border-radius:6px}
+.pipe-time{font-size:11px;color:var(--t3);background:var(--s2);padding:3px 10px;border-radius:20px;font-weight:600}
+.pipe h5{font-size:16px;font-weight:700;margin-bottom:4px}
+.pipe p{font-size:13px;color:var(--t2);margin:0}
+.pipe-parallel{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:16px}
+.pipe-box{background:var(--s1);border:1px solid var(--border);border-radius:var(--radius3);padding:20px}
+.pipe-box h6{font-size:14px;font-weight:700;margin-bottom:6px;display:flex;align-items:center;gap:8px}
+.pipe-box p{font-size:12.5px;color:var(--t3);margin:0;line-height:1.6}
+.pipe-connector{display:flex;justify-content:center;margin:-4px 0}
+.pipe-connector span{width:2px;height:20px;background:linear-gradient(180deg,var(--border2),var(--border))}
+
+/* ═══════ PROGRESS MOCKUP ═══════ */
+.progress-mk{margin:32px auto;max-width:760px}
+.prog-frame{background:var(--s1);border:2px solid var(--border2);border-radius:24px;overflow:hidden;
+  box-shadow:0 24px 80px rgba(0,0,0,.5)}
+.prog-bar-top{padding:12px 24px;background:var(--s2);border-bottom:1px solid var(--border);
+  display:flex;align-items:center;justify-content:space-between}
+.prog-bar-top .steps{font-size:12px;color:var(--t3)}
+.prog-bar-top .steps strong{color:var(--p2)}
+.prog-content{padding:40px;text-align:center}
+.prog-dino{font-size:64px;margin-bottom:16px;filter:drop-shadow(0 8px 24px rgba(0,0,0,.3))}
+.prog-status{font-size:18px;font-weight:700;color:var(--t1);margin-bottom:8px}
+.prog-track{background:var(--s2);border-radius:100px;height:12px;margin:20px 0;overflow:hidden;position:relative}
+.prog-fill{height:100%;border-radius:100px;background:linear-gradient(90deg,var(--p),var(--pk));
+  width:62%;transition:width 2s ease;position:relative}
+.prog-fill::after{content:'';position:absolute;right:0;top:0;bottom:0;width:40px;
+  background:linear-gradient(90deg,transparent,rgba(255,255,255,.2));border-radius:0 100px 100px 0}
+.prog-percent{font-size:14px;font-weight:700;color:var(--p2);margin-bottom:24px}
+.prog-detail{font-size:13px;color:var(--t3);margin-bottom:28px}
+.prog-pages{display:flex;gap:8px;justify-content:center}
+.prog-page{width:52px;height:52px;background:var(--s2);border:1px solid var(--border);border-radius:10px;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;font-size:10px;color:var(--t3);
+  transition:.3s}
+.prog-page.done{border-color:var(--g);background:rgba(52,211,153,.08)}
+.prog-page.done .pg-check{color:var(--g);font-size:16px}
+.prog-page.loading{border-color:var(--p);background:var(--p-glow);animation:pulseBorder 1.5s infinite}
+@keyframes pulseBorder{0%,100%{box-shadow:0 0 0 0 var(--p-glow)}50%{box-shadow:0 0 12px 2px var(--p-glow2)}}
+.prog-page .pg-num{font-size:10px;font-weight:600;margin-top:2px}
+.prog-tip{margin-top:24px;font-size:12px;color:var(--t3);display:flex;align-items:center;justify-content:center;gap:6px}
+
+/* ═══════ METRIC CARDS ═══════ */
+.metrics{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin:24px 0}
+.metric{background:var(--glass);border:1px solid var(--border);border-radius:var(--radius2);padding:24px;text-align:center;transition:.3s}
+.metric:hover{border-color:var(--border2);transform:translateY(-4px)}
+.metric .m-val{font-size:28px;font-weight:900;letter-spacing:-1px;margin-bottom:2px}
+.metric .m-val.c1{color:var(--g)}.metric .m-val.c2{color:var(--b)}.metric .m-val.c3{color:var(--o)}.metric .m-val.c4{color:var(--pk)}
+.metric .m-lab{font-size:12px;color:var(--t2);font-weight:500}
+.metric .m-desc{font-size:11px;color:var(--t4);margin-top:4px}
+
+/* ═══════ COMPLETION MOCKUP ═══════ */
+.complete-device{margin:32px auto;max-width:760px}
+.complete-frame{background:var(--s1);border:2px solid var(--border2);border-radius:24px;overflow:hidden;
+  box-shadow:0 24px 80px rgba(0,0,0,.5)}
+.complete-content{padding:48px 40px;text-align:center}
+.complete-emoji{font-size:72px;margin-bottom:16px}
+.complete-title{font-size:24px;font-weight:800;margin-bottom:8px;letter-spacing:-.5px}
+.complete-sub{font-size:14px;color:var(--t3);margin-bottom:32px}
+.complete-stats{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:32px}
+.cs{background:var(--s2);border:1px solid var(--border);border-radius:var(--radius3);padding:16px 12px;text-align:center}
+.cs .cs-val{font-size:24px;font-weight:800}
+.cs .cs-val.v1{color:var(--g)}.cs .cs-val.v2{color:var(--b)}.cs .cs-val.v3{color:var(--o)}.cs .cs-val.v4{color:var(--pk)}
+.cs .cs-lab{font-size:11px;color:var(--t3);margin-top:2px}
+.complete-recs{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-top:32px}
+.rec{background:var(--s2);border:1px solid var(--border);border-radius:var(--radius3);padding:20px;text-align:center;
+  cursor:pointer;transition:.3s}
+.rec:hover{border-color:var(--border2);transform:translateY(-4px);box-shadow:0 12px 32px rgba(0,0,0,.2)}
+.rec .rec-ico{font-size:28px;margin-bottom:8px}
+.rec .rec-name{font-size:13px;font-weight:600;color:var(--t1);margin-bottom:2px}
+.rec .rec-type{font-size:11px;color:var(--t3)}
+
+/* ═══════ SCOPE ═══════ */
+.scope{display:grid;grid-template-columns:1fr 1fr;gap:20px;margin:28px 0}
+.scope-card{background:var(--glass);border:1px solid var(--border);border-radius:var(--radius);padding:32px}
+.scope-card h5{font-size:16px;font-weight:700;margin-bottom:16px;display:flex;align-items:center;gap:8px}
+.scope-card.do h5{color:var(--g)}.scope-card.dont h5{color:var(--t3)}
+.scope-card ul{list-style:none;padding:0}
+.scope-card li{padding:8px 0;font-size:13.5px;color:var(--t2);display:flex;align-items:flex-start;gap:10px;
+  border-bottom:1px solid rgba(120,100,255,.04)}
+.scope-card li:last-child{border-bottom:none}
+.scope-card.do li::before{content:'✓';color:var(--g);font-weight:800;font-size:14px;flex-shrink:0}
+.scope-card.dont li::before{content:'✗';color:var(--r);font-weight:800;font-size:14px;flex-shrink:0;opacity:.6}
+
+/* ═══════ TIMELINE ═══════ */
+.timeline{margin:32px 0}
+.tl{display:flex;gap:20px;padding:24px 0;border-bottom:1px solid rgba(120,100,255,.06)}
+.tl:last-child{border-bottom:none}
+.tl-marker{display:flex;flex-direction:column;align-items:center;min-width:52px}
+.tl-dot{width:40px;height:40px;border-radius:12px;display:flex;align-items:center;justify-content:center;
+  font-weight:800;font-size:12px;color:#fff;flex-shrink:0;letter-spacing:-.5px}
+.tl-dot.d1{background:linear-gradient(135deg,var(--b),var(--cy))}
+.tl-dot.d2{background:linear-gradient(135deg,var(--p),#9333ea)}
+.tl-dot.d3{background:linear-gradient(135deg,var(--g),#059669)}
+.tl-dot.d4{background:linear-gradient(135deg,var(--o),var(--r))}
+.tl-line{flex:1;width:2px;background:var(--border);margin-top:8px}
+.tl-body h5{font-size:15px;font-weight:700;margin-bottom:4px}
+.tl-body p{font-size:13px;color:var(--t3);margin:0}
+.tl-body .tl-tag{display:inline-block;font-size:10px;font-weight:600;color:var(--p2);
+  background:var(--p-glow);border:1px solid var(--border2);padding:3px 10px;border-radius:20px;margin-top:6px}
+
+/* ═══════ COLLAB ═══════ */
+.collab{background:var(--glass);border:1px solid var(--border);border-radius:var(--radius);padding:32px;margin:20px 0;transition:.3s}
+.collab:hover{border-color:var(--border2)}
+.collab-top{display:flex;align-items:center;gap:16px;margin-bottom:20px}
+.collab-ico{width:52px;height:52px;border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:24px;flex-shrink:0}
+.collab-ico.c1{background:linear-gradient(135deg,rgba(251,191,36,.12),rgba(251,146,60,.08));border:1px solid rgba(251,191,36,.2)}
+.collab-ico.c2{background:linear-gradient(135deg,rgba(244,114,182,.12),rgba(248,113,113,.08));border:1px solid rgba(244,114,182,.2)}
+.collab-ico.c3{background:linear-gradient(135deg,rgba(96,165,250,.12),rgba(34,211,238,.08));border:1px solid rgba(96,165,250,.2)}
+.collab-ico.c4{background:linear-gradient(135deg,rgba(52,211,153,.12),rgba(16,185,129,.08));border:1px solid rgba(52,211,153,.2)}
+.collab h4{font-size:17px;font-weight:700;margin:0}
+.collab .collab-sub{font-size:13px;color:var(--t3)}
+.collab>p{font-size:13px;color:var(--t3);margin-bottom:16px}
+.q-list{list-style:none;padding:0;margin:0}
+.q-list li{display:flex;gap:10px;padding:10px 16px;background:var(--s1);border:1px solid rgba(120,100,255,.06);
+  border-radius:var(--radius4);margin:6px 0;font-size:13px;color:var(--t2);transition:.2s;line-height:1.6}
+.q-list li:hover{border-color:var(--border);background:var(--s2)}
+.q-list .qid{color:var(--p2);font-weight:700;flex-shrink:0;width:24px;font-size:12px}
+.collab .output{font-size:12px;color:var(--p2);margin-top:14px;font-weight:600}
+
+/* ═══════ FOOTER ═══════ */
+.footer{text-align:center;padding:60px 40px;border-top:1px solid var(--border)}
+.footer p{font-size:13px;color:var(--t3)}
+.footer .f-brand{font-size:24px;margin-bottom:8px}
+
+/* ═══════ PROTOTYPE EMBED ═══════ */
+.proto-section{padding:60px 40px 80px;max-width:1060px;margin:0 auto;text-align:center}
+.proto-section .sec-label{display:inline-flex;align-items:center;gap:8px;font-size:11px;font-weight:700;
+  color:var(--p2);text-transform:uppercase;letter-spacing:2px;margin-bottom:16px}
+.proto-section .sec-label .num{background:var(--p-glow);border:1px solid var(--border2);padding:3px 10px;border-radius:6px;font-size:10px}
+.proto-section h2{font-size:clamp(24px,3.5vw,36px);font-weight:800;letter-spacing:-1px;margin-bottom:8px}
+.proto-section>p{color:var(--t2);font-size:14px;margin-bottom:32px}
+.proto-wrap{position:relative;width:100%;max-width:960px;margin:0 auto;aspect-ratio:4/3;
+  border-radius:28px;overflow:hidden;border:2.5px solid rgba(120,100,255,.3);
+  box-shadow:0 40px 120px rgba(0,0,0,.5),0 0 80px rgba(124,92,252,.08),0 0 0 1px rgba(255,255,255,.04) inset}
+.proto-wrap iframe{width:100%;height:100%;border:none;background:#08081a}
+.proto-hint{display:flex;align-items:center;justify-content:center;gap:8px;margin-top:16px;
+  font-size:12px;color:var(--t4)}
+.proto-hint .arrow{animation:bounceR 1.5s infinite}
+@keyframes bounceR{0%,100%{transform:translateX(0)}50%{transform:translateX(4px)}}
+
+/* ═══════ ANIMATIONS ═══════ */
+.reveal{opacity:0;transform:translateY(24px);transition:opacity .7s ease,transform .7s ease}
+.reveal.visible{opacity:1;transform:translateY(0)}
+
+/* ═══════ RESPONSIVE ═══════ */
+@media(max-width:768px){
+  .nav-links{display:none}
+  .methods,.g3,.mk-inputs{grid-template-columns:1fr}
+  .g2,.scope,.pipe-parallel,.complete-stats{grid-template-columns:1fr 1fr}
+  .g4,.metrics{grid-template-columns:1fr 1fr}
+  .goals{grid-template-columns:1fr}
+  .stepper{flex-wrap:wrap;gap:4px}
+  .stp-line{display:none}
+  .hero-stats{flex-direction:column;gap:20px}
+  .complete-recs{grid-template-columns:1fr}
+}
+</style>
+</head>
+<body>
+
+<!-- ═══════ NAV ═══════ -->
+<nav class="nav" id="nav">
+  <div class="nav-inner">
+    <div class="nav-brand">
+      <div class="logo">🦖</div>
+      Dino AI 绘本工坊
+      <span class="nav-version">PRD v0.1</span>
+    </div>
+    <div class="nav-links">
+      <a href="#hero">概览</a>
+      <a href="#prototype">原型</a>
+      <a href="#approaches">三种方式</a>
+      <a href="#design">产品流程</a>
+      <a href="#tech">技术架构</a>
+      <a href="#mvp">MVP</a>
+      <a href="#metrics">指标</a>
+      <a href="#collab">协作</a>
+    </div>
+  </div>
+</nav>
+
+<!-- ═══════ HERO ═══════ -->
+<section class="hero" id="hero">
+  <div class="hero-chip"><span class="dot"></span>Interactive PRD · AI Storybook Studio</div>
+  <h1>
+    <span class="grad1">让每个孩子的世界</span><br>
+    <span class="grad2">变成一本专属英语绘本</span>
+  </h1>
+  <p class="hero-desc">三种输入方式 · 一键生成个性化英语绘本<br>
+    孩子上传照片、语音描述、或选择主题 → AI 实时生成完整绘本 → 沉浸式阅读学习</p>
+  <div class="hero-actions">
+    <a href="#prototype" class="btn btn-primary">▶ 体验交互原型</a>
+    <a href="#design" class="btn btn-ghost">查看产品设计 →</a>
+  </div>
+  <div class="hero-stats">
+    <div class="hero-stat"><div class="val c1">$0.44</div><div class="lab">单本生成成本</div></div>
+    <div class="hero-stat"><div class="val c2">≤ 45s</div><div class="lab">生成等待时间</div></div>
+    <div class="hero-stat"><div class="val c3">4 周</div><div class="lab">MVP 交付周期</div></div>
+  </div>
+</section>
+
+<!-- ═══════ 背景与目标 ═══════ -->
+<section class="sec reveal" id="background">
+  <div class="sec-label"><span class="num">01</span> 背景与目标</div>
+  <h2>为什么做 AI 绘本</h2>
+  <p>Dino AI 是一款面向 <strong>4-13 岁儿童</strong>的 AI 英语学习 App。当前内容矩阵包含系统课、复习课、单词 PK 游戏，但缺少一种<strong>低压力、高兴趣、可反复消费的阅读内容</strong>。</p>
+
+  <blockquote>所有孩子读的是同一本书，同一个故事，同一个主角。<br>传统绘本的根本问题 —— 千人一面。</blockquote>
+
+  <h3>核心痛点</h3>
+  <div class="grid g4 reveal">
+    <div class="pain"><div class="ico">📋</div><h5>内容同质化</h5><p>所有孩子看到的绘本一样，无法匹配个体兴趣</p></div>
+    <div class="pain"><div class="ico">⏳</div><h5>产能瓶颈</h5><p>人工创作一本周期 1-2 周，远低于消耗速度</p></div>
+    <div class="pain"><div class="ico">😴</div><h5>动力不足</h5><p>"又是别人的故事"，缺乏代入感和主动阅读意愿</p></div>
+    <div class="pain"><div class="ico">🎯</div><h5>难度不匹配</h5><p>固定绘本无法精准匹配当前词汇量和语言水平</p></div>
+  </div>
+
+  <h3>核心假设</h3>
+  <blockquote>当绘本故事来自孩子自己的世界 —— 自己的宠物、喜欢的玩具、自己取的名字 —— <strong>阅读完成率、重复阅读率、词汇留存率</strong>会显著高于通用绘本。</blockquote>
+
+  <h3>MVP 目标</h3>
+  <blockquote>「AI 为孩子生成个性化绘本」这种内容形态，孩子是否愿意读完、读完后是否愿意再来一本？</blockquote>
+  <div class="goals reveal">
+    <div class="goal"><div class="label">主要目标</div><div class="value">跑通全链路<br>采集阅读行为数据</div></div>
+    <div class="goal"><div class="label">北极星候选</div><div class="value">阅读完成率<br>+「再来一本」率</div></div>
+    <div class="goal"><div class="label">MVP 不做</div><div class="value">绘本商城 / 社交分享<br>App 内嵌（先 Web）</div></div>
+  </div>
+</section>
+
+<hr class="divider">
+
+<!-- ═══════ 三种输入方式 ═══════ -->
+<section class="sec reveal" id="approaches">
+  <div class="sec-label"><span class="num">02</span> 三种输入方式</div>
+  <h2>AI 绘本可以怎么触发</h2>
+  <p>核心假设是「孩子的世界变成故事」。基于不同的输入方式，我们设计了三条路径：</p>
+
+  <div class="methods reveal">
+    <div class="method m1">
+      <div class="m-icon">📸</div>
+      <h4>上传图片 · 拍照变故事</h4>
+      <p class="m-sub">拍下你最喜欢的玩具/宠物/房间，Dino 帮你变成绘本！</p>
+      <div class="scenario"><strong>泰迪熊照片</strong> → Teddy Bear's Space Adventure</div>
+      <div class="scenario"><strong>家里的小猫</strong> → Kitty's Day at School</div>
+      <div class="scenario"><strong>自己的画</strong> → 画中角色变绘本主角</div>
+      <div class="tags">
+        <span class="tag pro">代入感最强</span>
+        <span class="tag pro">拍照最直觉</span>
+        <span class="tag con">需 Vision API</span>
+      </div>
+    </div>
+    <div class="method m2">
+      <div class="m-icon">🎙️</div>
+      <h4>语音输入 · 说出你的故事</h4>
+      <p class="m-sub">长按说话告诉 Dino 你想看什么故事，AI 为你量身创作！</p>
+      <div class="scenario"><strong>"我想看恐龙去太空"</strong> → Dino's Journey to Mars</div>
+      <div class="scenario"><strong>"公主和龙的故事"</strong> → The Princess & Friendly Dragon</div>
+      <div class="scenario"><strong>"I want animal stories"</strong> → 动物词汇绘本</div>
+      <div class="tags">
+        <span class="tag pro">自由度最高</span>
+        <span class="tag pro">低龄友好</span>
+        <span class="tag pro">支持中英文</span>
+      </div>
+    </div>
+    <div class="method m3">
+      <div class="m-icon">🏷️</div>
+      <h4>预设主题 · 一键选择</h4>
+      <p class="m-sub">不知道想看什么？从 Dino 精选的主题里挑一个！</p>
+      <div class="scenario"><strong>零门槛</strong> → 点一下就开始生成</div>
+      <div class="scenario"><strong>每次不同</strong> → AI 在主题内随机创作</div>
+      <div class="scenario"><strong>运营可控</strong> → 按节日/热点推荐</div>
+      <div class="tags">
+        <span class="tag pro">4岁可用</span>
+        <span class="tag pro">零门槛</span>
+        <span class="tag con">个性化弱</span>
+      </div>
+    </div>
+  </div>
+
+  <h3>预设主题矩阵</h3>
+  <div class="themes reveal">
+    <span class="theme on" onclick="pickTheme(this)">🐱 动物世界 <span style="font-size:10px;color:var(--t4)">L1-L4</span></span>
+    <span class="theme" onclick="pickTheme(this)">🚀 太空探索 <span style="font-size:10px;color:var(--t4)">L2-L4</span></span>
+    <span class="theme" onclick="pickTheme(this)">🏰 童话故事 <span style="font-size:10px;color:var(--t4)">L1-L3</span></span>
+    <span class="theme" onclick="pickTheme(this)">🌊 海底世界 <span style="font-size:10px;color:var(--t4)">L1-L3</span></span>
+    <span class="theme" onclick="pickTheme(this)">👨‍👩‍👧 日常生活 <span style="font-size:10px;color:var(--t4)">L1-L2</span></span>
+    <span class="theme" onclick="pickTheme(this)">🎄 节日故事 <span style="font-size:10px;color:var(--t4)">L2-L4</span></span>
+    <span class="theme" onclick="pickTheme(this)">🏫 校园趣事 <span style="font-size:10px;color:var(--t4)">L2-L4</span></span>
+    <span class="theme" onclick="pickTheme(this)">🦸 超级英雄 <span style="font-size:10px;color:var(--t4)">L3-L4</span></span>
+  </div>
+
+  <h3>三种方式对比</h3>
+  <table class="tbl reveal">
+    <thead><tr><th>维度</th><th>📸 上传图片</th><th>🎙️ 语音输入</th><th>🏷️ 预设主题</th></tr></thead>
+    <tbody>
+      <tr><td><strong>个性化</strong></td><td>★★★★★</td><td>★★★★☆</td><td>★★★☆☆</td></tr>
+      <tr><td><strong>操作门槛</strong></td><td>★★★☆☆</td><td>★★★★☆</td><td>★★★★★</td></tr>
+      <tr><td><strong>适合年龄</strong></td><td>5+ 岁</td><td>4+（说话即可）</td><td>4+ 岁</td></tr>
+      <tr><td><strong>技术复杂度</strong></td><td>高 (Vision+审核)</td><td>中 (ASR+LLM)</td><td>低 (模板+LLM)</td></tr>
+      <tr><td><strong>惊喜感</strong></td><td>🔥 最强</td><td>⚡ 中</td><td>✨ 最弱</td></tr>
+      <tr><td><strong>MVP 优先级</strong></td><td>P0 必做</td><td>P0 必做</td><td>P0 必做</td></tr>
+    </tbody>
+  </table>
+
+  <div class="card reveal" style="border-left:3px solid var(--p);margin-top:28px">
+    <h4 style="margin-top:0;color:var(--t1)">📌 MVP 策略：三种方式全做，引导顺序不同</h4>
+    <p style="color:var(--t2)">• 新用户首次进入 → 先展示 <strong>预设主题</strong>（零门槛体验）</p>
+    <p style="color:var(--t2)">• 第 2 次进入 → 引导 <strong>语音输入</strong>（"这次想看什么故事？说给 Dino 听！"）</p>
+    <p style="color:var(--t2)">• 第 3 次及以后 → 引导 <strong>上传图片</strong>（"拍一张你喜欢的东西吧！"）</p>
+  </div>
+</section>
+
+<hr class="divider">
+
+<!-- ═══════ 产品设计 ═══════ -->
+<section class="sec" id="design">
+  <div class="sec-label"><span class="num">03</span> 完整产品设计</div>
+  <h2>直接体验产品流程</h2>
+  <p>点击下方原型，从「选择输入方式」到「阅读完成」，走完整个用户旅程</p>
+
+  <div class="proto-section" id="prototype" style="padding:20px 0 40px">
+    <div class="proto-wrap">
+      <iframe src="prototype.html" allow="microphone"></iframe>
+    </div>
+    <div class="proto-hint">
+      <span>👆 点击原型内的按钮进行交互</span>
+      <span class="arrow">→</span>
+      <span>走完 5 步完整流程</span>
+    </div>
+  </div>
+
+</section>
+
+<hr class="divider">
+
+<!-- ═══════ 技术架构 ═══════ -->
+<section class="sec reveal" id="tech">
+  <div class="sec-label"><span class="num">04</span> 技术架构</div>
+  <h2>系统架构与成本</h2>
+
+  <h3>核心服务</h3>
+  <div class="grid g3 reveal">
+    <div class="card" style="text-align:center"><div style="font-size:36px;margin-bottom:10px">📤</div><div style="font-size:15px;font-weight:700;margin-bottom:4px">素材解析</div><div style="font-size:12px;color:var(--t3)">GPT-4o Vision<br>1-3s</div></div>
+    <div class="card" style="text-align:center"><div style="font-size:36px;margin-bottom:10px">📖</div><div style="font-size:15px;font-weight:700;margin-bottom:4px">故事生成</div><div style="font-size:12px;color:var(--t3)">GPT-4o / Claude<br>3-5s</div></div>
+    <div class="card" style="text-align:center"><div style="font-size:36px;margin-bottom:10px">🎨</div><div style="font-size:15px;font-weight:700;margin-bottom:4px">插画生成</div><div style="font-size:12px;color:var(--t3)">DALL·E 3 / Flux<br>5-8s（并行）</div></div>
+    <div class="card" style="text-align:center"><div style="font-size:36px;margin-bottom:10px">🔊</div><div style="font-size:15px;font-weight:700;margin-bottom:4px">语音生成</div><div style="font-size:12px;color:var(--t3)">Azure TTS<br>2-3s（并行）</div></div>
+    <div class="card" style="text-align:center"><div style="font-size:36px;margin-bottom:10px">📦</div><div style="font-size:15px;font-weight:700;margin-bottom:4px">绘本组装</div><div style="font-size:12px;color:var(--t3)">打包 → CDN<br>1-2s</div></div>
+    <div class="card" style="text-align:center"><div style="font-size:36px;margin-bottom:10px">🛡️</div><div style="font-size:15px;font-weight:700;margin-bottom:4px">安全审核</div><div style="font-size:12px;color:var(--t3)">文本+图片<br>1-2s</div></div>
+  </div>
+
+  <h3>单本生成成本</h3>
+  <table class="tbl reveal">
+    <thead><tr><th>环节</th><th>单价</th><th>8 页绘本</th></tr></thead>
+    <tbody>
+      <tr><td>素材识别</td><td>~$0.01</td><td>$0.01</td></tr>
+      <tr><td>故事生成</td><td>~$0.03</td><td>$0.03</td></tr>
+      <tr><td>插画生成</td><td>~$0.04/张</td><td>$0.36（含封面 9 张）</td></tr>
+      <tr><td>语音生成</td><td>~$0.005/页</td><td>$0.04</td></tr>
+      <tr><td><strong style="color:var(--p2)">单本总计</strong></td><td></td><td><strong style="color:var(--p2)">$0.44</strong></td></tr>
+    </tbody>
+  </table>
+</section>
+
+<hr class="divider">
+
+<!-- ═══════ MVP ═══════ -->
+<section class="sec reveal" id="mvp">
+  <div class="sec-label"><span class="num">05</span> MVP 边界</div>
+  <h2>先做什么，不做什么</h2>
+
+  <div class="scope reveal">
+    <div class="scope-card do">
+      <h5>✓ MVP 必做</h5>
+      <ul>
+        <li>三种输入方式（图片 + 语音 + 主题）</li>
+        <li>AI 全链路（故事→插画→语音→组装）</li>
+        <li>沉浸式阅读器（翻页+朗读+点词）</li>
+        <li>渐进式等待（Dino 动画+逐页预览）</li>
+        <li>我的书架（正在阅读+已读+收藏）</li>
+        <li>阅读进度记录（退出续读）</li>
+        <li>内容安全审核（文本+图像）</li>
+        <li>用量控制（免费 1 本/天，VIP 3 本）</li>
+      </ul>
+    </div>
+    <div class="scope-card dont">
+      <h5>✗ MVP 不做</h5>
+      <ul>
+        <li>绘本分享海报</li>
+        <li>阅读排行榜</li>
+        <li>课后练习题</li>
+        <li>插画风格自选（V2）</li>
+        <li>绘本评论 / 评分</li>
+        <li>家长端阅读报告</li>
+        <li>混合推荐算法</li>
+        <li>App 内嵌（先 Web）</li>
+      </ul>
+    </div>
+  </div>
+
+  <h3>推荐落地节奏</h3>
+  <div class="timeline reveal">
+    <div class="tl"><div class="tl-marker"><div class="tl-dot d1">W1</div><div class="tl-line"></div></div><div class="tl-body"><h5>前端 Webapp 框架</h5><p>三种输入 UI + 配置页 + 阅读器</p><div class="tl-tag">可交互原型</div></div></div>
+    <div class="tl"><div class="tl-marker"><div class="tl-dot d2">W2</div><div class="tl-line"></div></div><div class="tl-body"><h5>后端生成管线</h5><p>故事 + 插画 + 语音 + 组装全链路</p><div class="tl-tag">全链路跑通</div></div></div>
+    <div class="tl"><div class="tl-marker"><div class="tl-dot d3">W3</div><div class="tl-line"></div></div><div class="tl-body"><h5>安全审核 + 书架 + 进度</h5><p>安全审核 + 用量控制 + 阅读进度</p><div class="tl-tag">可用版本</div></div></div>
+    <div class="tl"><div class="tl-marker"><div class="tl-dot d4">W4</div></div><div class="tl-body"><h5>内测 + 数据采集</h5><p>Bug 修复 + 阅读行为数据采集</p><div class="tl-tag">灰度上线</div></div></div>
+  </div>
+</section>
+
+<hr class="divider">
+
+<!-- ═══════ 指标 ═══════ -->
+<section class="sec reveal" id="metrics">
+  <div class="sec-label"><span class="num">06</span> 指标与里程碑</div>
+  <h2>怎么算成功</h2>
+
+  <h3>MVP 三阶段</h3>
+  <div class="grid g3 reveal">
+    <div class="card" style="text-align:center;border-top:3px solid var(--b)"><div style="font-size:32px;margin-bottom:8px">①</div><div style="font-size:16px;font-weight:700;margin-bottom:6px">内部 Demo</div><p style="font-size:13px;color:var(--t3);margin:0">全链路跑通<br>生成 50 本确认质量基线</p></div>
+    <div class="card" style="text-align:center;border-top:3px solid var(--p)"><div style="font-size:32px;margin-bottom:8px">②</div><div style="font-size:16px;font-weight:700;margin-bottom:6px">小范围灰度</div><p style="font-size:13px;color:var(--t3);margin:0">100 个家庭试用<br>采集完成率/再来一本率</p></div>
+    <div class="card" style="text-align:center;border-top:3px solid var(--g)"><div style="font-size:32px;margin-bottom:8px">③</div><div style="font-size:16px;font-weight:700;margin-bottom:6px">数据验证</div><p style="font-size:13px;color:var(--t3);margin:0">继续/调整/放弃决策<br>AI 绘本 vs 通用绘本</p></div>
+  </div>
+
+  <h3>北极星指标</h3>
+  <div class="metrics reveal">
+    <div class="metric"><div class="m-val c1">≥ 95%</div><div class="m-lab">生成成功率</div><div class="m-desc">链路健康度</div></div>
+    <div class="metric"><div class="m-val c2">≤ 45s</div><div class="m-lab">等待时间</div><div class="m-desc">体验底线</div></div>
+    <div class="metric"><div class="m-val c3">≥ 60%</div><div class="m-lab">完成率</div><div class="m-desc">读到最后一页</div></div>
+    <div class="metric"><div class="m-val c4">≥ 40%</div><div class="m-lab">再来一本率</div><div class="m-desc">读完后再创作</div></div>
+  </div>
+
+  <h3>核心假设验证</h3>
+  <table class="tbl reveal">
+    <thead><tr><th>假设</th><th>验证方式</th><th>判定标准</th></tr></thead>
+    <tbody>
+      <tr><td>AI 绘本完成率高于通用</td><td>A/B 对比</td><td>AI &gt; 通用 1.5 倍</td></tr>
+      <tr><td>图片上传代入感更强</td><td>三种方式完成率对比</td><td>图片 &gt; 语音 &gt; 主题</td></tr>
+      <tr><td>孩子愿意反复创作</td><td>7 日人均创作次数</td><td>≥ 3 本/人/周</td></tr>
+      <tr><td>家长认可学习价值</td><td>NPS 调研</td><td>NPS ≥ 40</td></tr>
+    </tbody>
+  </table>
+
+  <h3>Post-MVP 路线</h3>
+  <table class="tbl reveal">
+    <thead><tr><th>阶段</th><th>功能</th><th>价值</th></tr></thead>
+    <tbody>
+      <tr><td><strong>V2 体验增强</strong></td><td>插画风格自选 · 角色自定义 · 课后互动</td><td>个性化 + 学习深度</td></tr>
+      <tr><td><strong>V3 社交裂变</strong></td><td>分享海报 · 排行榜 · 好友推荐</td><td>增长 + 传播</td></tr>
+      <tr><td><strong>V4 平台化</strong></td><td>家长报告 · 教师推荐 · UGC 广场</td><td>生态 + 商业化</td></tr>
+      <tr><td><strong>V5 多模态</strong></td><td>绘本动画化 · 互动剧 · 角色语音对话</td><td>内容形态升级</td></tr>
+    </tbody>
+  </table>
+</section>
+
+<hr class="divider">
+
+<!-- ═══════ 协作 ═══════ -->
+<section class="sec reveal" id="collab">
+  <div class="sec-label"><span class="num">07</span> 需要各模块支援</div>
+  <h2>接下来需要谁一起推</h2>
+
+  <div class="collab">
+    <div class="collab-top">
+      <div class="collab-ico c1">🎨</div>
+      <div><h4>AI / 算法团队</h4><div class="collab-sub">Prompt 体系 + 质量标准</div></div>
+    </div>
+    <p>AI 绘本的核心体验取决于「故事写得好不好」和「插画画得好不好」。Prompt 体系不对齐，输出质量不可控。</p>
+    <ul class="q-list">
+      <li><span class="qid">A1</span>故事 Prompt 如何按 Level 分层？L1 和 L4 的句式、词汇、篇幅差异如何体现？</li>
+      <li><span class="qid">A2</span>插画如何保持同一绘本内角色一致性？是否需要 IP Adapter / LoRA？</li>
+      <li><span class="qid">A3</span>图片上传后识别精度如何保证？GPT-4o Vision 还是自建？</li>
+      <li><span class="qid">A4</span>插画中可能出现拼写错误的英文字母？如何检测过滤？</li>
+      <li><span class="qid">A5</span>8 页并行生成的 API 并发限制和成本控制方案？</li>
+    </ul>
+    <div class="output">📄 产出物：故事 Prompt 模板 + 插画 Prompt 模板 + 质量评估标准</div>
+  </div>
+
+  <div class="collab">
+    <div class="collab-top">
+      <div class="collab-ico c2">🛡️</div>
+      <div><h4>安全合规</h4><div class="collab-sub">儿童内容安全审核规则和流程</div></div>
+    </div>
+    <p>儿童产品，内容安全零容忍。AI 生成的文本和图片必须在用户看到之前完成审核。</p>
+    <ul class="q-list">
+      <li><span class="qid">S1</span>用户上传图片的安全审核方案？（自建 vs 第三方 vs 混合）</li>
+      <li><span class="qid">S2</span>AI 生成文本除 NSFW 外是否有教育相关禁词表？</li>
+      <li><span class="qid">S3</span>AI 生成图片是否需要人工抽检？比例和 SLA？</li>
+      <li><span class="qid">S4</span>审核不通过时是否区分"素材不合适"和"结果不合适"？</li>
+    </ul>
+    <div class="output">📄 产出物：审核清单 + 自动审核方案 + 人工抽检流程</div>
+  </div>
+
+  <div class="collab">
+    <div class="collab-top">
+      <div class="collab-ico c3">⚙️</div>
+      <div><h4>后端研发</h4><div class="collab-sub">生成管线技术可行性和工期</div></div>
+    </div>
+    <ul class="q-list">
+      <li><span class="qid">B1</span>8 页并行调用 DALL·E 3 API，rate limit？是否需要队列？</li>
+      <li><span class="qid">B2</span>渐进式展示（SSE/WebSocket 实时推送）的技术方案？</li>
+      <li><span class="qid">B3</span>绘本资源存储和 CDN 方案？预估成本？</li>
+      <li><span class="qid">B4</span>用量控制与会员系统如何打通？</li>
+    </ul>
+    <div class="output">📄 产出物：技术方案 + 预估工期 + 成本模型</div>
+  </div>
+
+  <div class="collab">
+    <div class="collab-top">
+      <div class="collab-ico c4">💻</div>
+      <div><h4>前端 MVP Webapp</h4><div class="collab-sub">vibe coding 独立交付 · 2-3 周</div></div>
+    </div>
+    <p>技术栈建议：<strong>Next.js + Supabase + Vercel</strong></p>
+    <ul class="q-list">
+      <li><span class="qid">F1</span>三种输入 UI：拍照 / 语音 / 主题选择，含图片上传和语音识别</li>
+      <li><span class="qid">F2</span>配置页面：Level / 页数 / 风格 / 角色名选择</li>
+      <li><span class="qid">F3</span>生成等待页：Dino 动画 + 进度条 + 逐页预览（SSE）</li>
+      <li><span class="qid">F4</span>绘本阅读器：翻页 + 朗读 + 点词 + 译文 + 跟读</li>
+      <li><span class="qid">F5</span>我的书架：正在阅读 + 已读完 + 收藏</li>
+    </ul>
+  </div>
+
+  <h3>建议对齐顺序</h3>
+  <div class="timeline reveal">
+    <div class="tl"><div class="tl-marker"><div class="tl-dot d1" style="font-size:10px">本周</div><div class="tl-line"></div></div><div class="tl-body"><h5>🎨 AI 团队 · Prompt 体系对齐</h5><p>故事 + 插画 Prompt 模板定稿</p></div></div>
+    <div class="tl"><div class="tl-marker"><div class="tl-dot d2" style="font-size:10px">同步</div><div class="tl-line"></div></div><div class="tl-body"><h5>💻 前端 · Webapp 开发</h5><p>2-3 周交付可用版本</p></div></div>
+    <div class="tl"><div class="tl-marker"><div class="tl-dot d3" style="font-size:10px">本周</div><div class="tl-line"></div></div><div class="tl-body"><h5>⚙️ 后端 · 管线可行性评估</h5><p>技术方案 + 工期 + 成本</p></div></div>
+    <div class="tl"><div class="tl-marker"><div class="tl-dot d4" style="font-size:10px">就绪</div></div><div class="tl-body"><h5>🚀 联调 + 灰度</h5><p>全链路跑通，内测上线</p></div></div>
+  </div>
+</section>
+
+<!-- ═══════ FOOTER ═══════ -->
+<div class="footer">
+  <div class="f-brand">🦖</div>
+  <p>Dino AI · AI 绘本工坊 · Interactive PRD v0.1 — Draft 待评审</p>
+</div>
+
+<script>
+// Interactive elements
+function pickInp(el){document.querySelectorAll('.mk-inp').forEach(e=>e.classList.remove('sel'));el.classList.add('sel')}
+function pickPill(el){document.querySelectorAll('.mk-pill').forEach(e=>e.classList.remove('sel'));el.classList.add('sel')}
+function pickTheme(el){document.querySelectorAll('.themes .theme').forEach(e=>e.classList.remove('on'));el.classList.add('on')}
+
+function showWord(el,word,phonetic,meaning){
+  document.querySelectorAll('.reader-sentence .w').forEach(w=>w.classList.remove('hl'));
+  el.classList.add('hl');
+  const p=document.getElementById('wordPopup');
+  document.getElementById('wpWord').textContent=word;
+  document.getElementById('wpPhonetic').textContent=phonetic;
+  document.getElementById('wpMeaning').textContent=meaning;
+  p.classList.remove('show');
+  void p.offsetWidth;
+  p.classList.add('show');
+}
+
+// Nav active state
+const secs=document.querySelectorAll('section[id],.sec[id]');
+const links=document.querySelectorAll('.nav-links a');
+window.addEventListener('scroll',()=>{
+  let cur='';
+  secs.forEach(s=>{if(window.scrollY>=s.offsetTop-150)cur=s.getAttribute('id')});
+  links.forEach(a=>{
+    const href=a.getAttribute('href').slice(1);
+    a.classList.toggle('active',href===cur);
+  });
+});
+
+// Scroll reveal
+const observer=new IntersectionObserver((entries)=>{
+  entries.forEach(e=>{if(e.isIntersecting){e.target.classList.add('visible');observer.unobserve(e.target)}});
+},{threshold:0.1,rootMargin:'0px 0px -40px 0px'});
+document.querySelectorAll('.reveal').forEach(el=>observer.observe(el));
+
+// Stepper interaction
+document.querySelectorAll('.stp').forEach(s=>{
+  s.addEventListener('click',()=>{
+    document.querySelectorAll('.stp').forEach(x=>x.classList.remove('on'));
+    s.classList.add('on');
+  });
+});
+
+// Animate progress bar
+let progAnimated=false;
+const progObs=new IntersectionObserver((entries)=>{
+  entries.forEach(e=>{
+    if(e.isIntersecting&&!progAnimated){
+      progAnimated=true;
+      let pct=0;
+      const fill=document.getElementById('progFill');
+      const label=document.getElementById('progPercent');
+      const iv=setInterval(()=>{
+        pct+=1;
+        if(pct>92){clearInterval(iv);return}
+        fill.style.width=pct+'%';
+        label.textContent=pct+'%';
+      },40);
+    }
+  });
+},{threshold:0.3});
+const progEl=document.querySelector('.progress-mk');
+if(progEl)progObs.observe(progEl);
+</script>
+</body>
+</html>

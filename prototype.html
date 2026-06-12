@@ -1,0 +1,878 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>🦖 Dino AI 绘本工坊 · 交互原型</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Noto+Sans+SC:wght@300;400;500;700;900&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#08081a;--s1:#0e0e28;--s2:#141440;--s3:#1c1c52;--s4:#242468;
+  --glass:rgba(14,14,40,.85);
+  --border:rgba(120,100,255,.12);--border2:rgba(120,100,255,.25);--border3:rgba(120,100,255,.4);
+  --t1:#f0eeff;--t2:#b8b0e0;--t3:#7a72a8;--t4:#4d4578;
+  --p:#7c5cfc;--p2:#a78bfa;--p3:#c4b5fd;--pglow:rgba(124,92,252,.12);--pglow2:rgba(124,92,252,.25);
+  --g:#34d399;--o:#fb923c;--pk:#f472b6;--b:#60a5fa;--r:#f87171;--cy:#22d3ee;--y:#fbbf24;
+  --font:'Inter','Noto Sans SC',system-ui,sans-serif;
+}
+html{font-size:16px}
+body{font-family:var(--font);background:var(--bg);color:var(--t1);overflow-x:hidden;
+  min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;
+  -webkit-font-smoothing:antialiased;padding:20px}
+body::before{content:'';position:fixed;inset:0;pointer-events:none;z-index:-1;
+  background:radial-gradient(ellipse 80% 60% at 50% 30%,rgba(124,92,252,.08),transparent 60%),
+  radial-gradient(ellipse 60% 50% at 80% 80%,rgba(244,114,182,.04),transparent 50%)}
+
+/* ═══ HEADER ═══ */
+.hdr{text-align:center;margin-bottom:32px}
+.hdr h1{font-size:28px;font-weight:800;letter-spacing:-.8px;margin-bottom:6px;
+  background:linear-gradient(135deg,#f0eeff 30%,var(--p2) 70%);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.hdr p{font-size:14px;color:var(--t3)}
+.hdr .chip{display:inline-flex;align-items:center;gap:6px;background:var(--pglow);border:1px solid var(--border2);
+  padding:4px 14px;border-radius:100px;font-size:11px;color:var(--p2);font-weight:600;margin-bottom:12px}
+.hdr .chip .dot{width:5px;height:5px;border-radius:50%;background:var(--g);animation:pulse 2s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
+
+/* ═══ IPAD FRAME ═══ */
+.ipad{width:100%;max-width:900px;aspect-ratio:4/3;background:#0a0a22;
+  border:2.5px solid rgba(120,100,255,.3);border-radius:28px;overflow:hidden;position:relative;
+  box-shadow:0 40px 120px rgba(0,0,0,.6),0 0 0 1px rgba(255,255,255,.04) inset,0 0 80px rgba(124,92,252,.08)}
+.ipad-status{display:flex;align-items:center;justify-content:space-between;padding:6px 20px;
+  background:rgba(10,10,34,.9);border-bottom:1px solid var(--border);font-size:11px;color:var(--t3);font-weight:600}
+.ipad-status .cam{width:6px;height:6px;border-radius:50%;background:var(--s3);border:1px solid var(--border2)}
+.ipad-body{height:calc(100% - 28px);overflow:hidden;position:relative}
+
+/* ═══ SCREENS ═══ */
+.screen{position:absolute;inset:0;display:flex;flex-direction:column;opacity:0;pointer-events:none;
+  transition:opacity .5s,transform .5s;transform:translateX(40px)}
+.screen.active{opacity:1;pointer-events:all;transform:translateX(0)}
+.screen.exit{opacity:0;transform:translateX(-40px)}
+
+/* ═══ TOP BAR (shared) ═══ */
+.topbar{display:flex;align-items:center;justify-content:space-between;padding:12px 24px;
+  background:rgba(14,14,40,.95);border-bottom:1px solid var(--border);flex-shrink:0;backdrop-filter:blur(12px)}
+.topbar .logo{display:flex;align-items:center;gap:8px;font-size:14px;font-weight:700}
+.topbar .logo span{width:28px;height:28px;background:linear-gradient(135deg,var(--p),#9333ea);border-radius:8px;
+  display:flex;align-items:center;justify-content:center;font-size:15px}
+
+/* ═══ STEP INDICATOR ═══ */
+.steps-bar{display:flex;align-items:center;justify-content:center;gap:0;padding:14px 24px;
+  background:var(--s1);border-bottom:1px solid var(--border);flex-shrink:0}
+.si{display:flex;align-items:center;gap:6px;padding:0 12px;font-size:11.5px;font-weight:600;color:var(--t4);transition:.3s}
+.si .num{width:22px;height:22px;border-radius:50%;display:flex;align-items:center;justify-content:center;
+  font-size:10px;background:var(--s2);border:1.5px solid var(--border);transition:.3s}
+.si.done .num{background:var(--g);border-color:var(--g);color:#fff}
+.si.done{color:var(--g)}
+.si.cur .num{background:var(--p);border-color:var(--p);color:#fff;box-shadow:0 0 12px rgba(124,92,252,.4)}
+.si.cur{color:var(--p2)}
+.si-line{width:28px;height:1.5px;background:var(--border);margin:0 2px}
+.si-line.done{background:var(--g)}
+
+/* ═══ SCROLL AREA ═══ */
+.scroll{flex:1;overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch}
+.scroll::-webkit-scrollbar{width:4px}
+.scroll::-webkit-scrollbar-track{background:transparent}
+.scroll::-webkit-scrollbar-thumb{background:var(--border2);border-radius:4px}
+
+/* ═══ BOTTOM BAR ═══ */
+.bottombar{padding:12px 24px;background:rgba(14,14,40,.95);border-top:1px solid var(--border);
+  display:flex;align-items:center;justify-content:space-between;flex-shrink:0;backdrop-filter:blur(12px)}
+.bb-btn{padding:10px 28px;border-radius:10px;font-size:13px;font-weight:600;cursor:pointer;border:none;transition:.25s;letter-spacing:-.2px}
+.bb-primary{background:linear-gradient(135deg,var(--p),#9333ea);color:#fff;
+  box-shadow:0 4px 16px rgba(124,92,252,.35)}
+.bb-primary:hover{transform:translateY(-1px);box-shadow:0 6px 24px rgba(124,92,252,.5)}
+.bb-ghost{background:transparent;border:1px solid var(--border2);color:var(--t2)}
+.bb-ghost:hover{border-color:var(--border3);color:var(--t1)}
+.bb-hint{font-size:12px;color:var(--t4)}
+
+/* ═══ SCREEN 1: INPUT ═══ */
+.s1-content{padding:28px 32px}
+.dino-bubble{display:flex;align-items:flex-start;gap:12px;margin-bottom:28px;
+  background:linear-gradient(135deg,var(--pglow),transparent);border:1px solid var(--border);
+  border-radius:16px;padding:16px 20px}
+.dino-av{width:40px;height:40px;border-radius:12px;background:linear-gradient(135deg,#34d399,#059669);
+  display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0;
+  box-shadow:0 4px 12px rgba(52,211,153,.2)}
+.dino-msg{font-size:14px;color:var(--t2);line-height:1.6}
+.dino-msg strong{color:var(--t1)}
+
+.input-cards{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:28px}
+.inp-card{background:var(--s2);border:2px solid var(--border);border-radius:16px;padding:24px 16px;
+  text-align:center;cursor:pointer;transition:.3s;position:relative;overflow:hidden}
+.inp-card::after{content:'';position:absolute;inset:0;opacity:0;transition:.3s;pointer-events:none}
+.inp-card.c1::after{background:radial-gradient(circle at 50% 30%,rgba(96,165,250,.08),transparent 70%)}
+.inp-card.c2::after{background:radial-gradient(circle at 50% 30%,rgba(52,211,153,.08),transparent 70%)}
+.inp-card.c3::after{background:radial-gradient(circle at 50% 30%,rgba(244,114,182,.08),transparent 70%)}
+.inp-card:hover{border-color:var(--border2);transform:translateY(-3px)}
+.inp-card:hover::after{opacity:1}
+.inp-card.sel{border-color:var(--p);background:var(--pglow);box-shadow:0 0 24px var(--pglow)}
+.inp-card.sel::after{opacity:1}
+.inp-card .ic-icon{font-size:36px;margin-bottom:10px;position:relative;z-index:1}
+.inp-card .ic-name{font-size:14px;font-weight:700;color:var(--t1);margin-bottom:3px;position:relative;z-index:1}
+.inp-card .ic-desc{font-size:11.5px;color:var(--t3);line-height:1.4;position:relative;z-index:1}
+
+.sec-title{font-size:12px;color:var(--t3);font-weight:600;margin-bottom:12px;display:flex;align-items:center;gap:6px}
+.theme-pills{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:24px}
+.tp{background:var(--s2);border:1px solid var(--border);border-radius:100px;padding:10px 18px;
+  font-size:12.5px;color:var(--t2);cursor:pointer;transition:.25s;font-weight:500}
+.tp:hover{border-color:var(--border2);color:var(--t1);background:var(--s3)}
+.tp.sel{border-color:var(--p);color:var(--p2);background:var(--pglow);box-shadow:0 0 16px var(--pglow)}
+
+.sample-cards{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.samp{display:flex;align-items:center;gap:12px;background:var(--s2);border:1px solid var(--border);
+  border-radius:12px;padding:14px;cursor:pointer;transition:.3s}
+.samp:hover{border-color:var(--border2);transform:translateY(-2px);box-shadow:0 8px 24px rgba(0,0,0,.2)}
+.samp .s-img{width:52px;height:52px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:26px;flex-shrink:0}
+.samp .s-img.a{background:linear-gradient(135deg,#3b1d0f,#6b3a1f)}.samp .s-img.b{background:linear-gradient(135deg,#1a2a1a,#2d4a2d)}
+.samp .s-info{flex:1}.samp .s-name{font-size:13px;font-weight:600;color:var(--t1)}.samp .s-size{font-size:10px;color:var(--t4)}
+.samp .s-btn{font-size:11px;color:var(--p2);font-weight:600;white-space:nowrap}
+
+/* ═══ SCREEN 2: CONFIG ═══ */
+.s2-content{padding:28px 32px}
+.preview-row{display:flex;align-items:center;gap:16px;background:var(--s2);border:1px solid var(--border);
+  border-radius:14px;padding:16px 20px;margin-bottom:28px}
+.preview-img{width:64px;height:64px;border-radius:12px;background:linear-gradient(135deg,#1a1040,#2a1860);
+  display:flex;align-items:center;justify-content:center;font-size:32px;flex-shrink:0}
+.preview-info .pi-title{font-size:14px;font-weight:700;color:var(--t1)}
+.preview-info .pi-sub{font-size:12px;color:var(--t3)}
+.preview-info .pi-badge{display:inline-flex;align-items:center;gap:4px;font-size:10px;font-weight:600;
+  color:var(--g);background:rgba(52,211,153,.1);border:1px solid rgba(52,211,153,.2);padding:2px 8px;border-radius:20px;margin-top:4px}
+
+.cfg-group{margin-bottom:24px}
+.cfg-label{font-size:13px;font-weight:600;color:var(--t1);margin-bottom:10px;display:flex;align-items:center;gap:6px}
+.cfg-label .req{color:var(--r);font-size:10px}
+.cfg-options{display:flex;gap:8px;flex-wrap:wrap}
+.cfg-opt{background:var(--s2);border:1.5px solid var(--border);border-radius:10px;padding:12px 18px;
+  cursor:pointer;transition:.25s;text-align:center;min-width:100px}
+.cfg-opt:hover{border-color:var(--border2)}
+.cfg-opt.sel{border-color:var(--p);background:var(--pglow);box-shadow:0 0 12px var(--pglow)}
+.cfg-opt .co-main{font-size:14px;font-weight:700;color:var(--t1);margin-bottom:2px}
+.cfg-opt.sel .co-main{color:var(--p2)}
+.cfg-opt .co-sub{font-size:10px;color:var(--t4)}
+
+.cfg-input{display:flex;align-items:center;gap:8px}
+.cfg-input input{flex:1;background:var(--s2);border:1.5px solid var(--border);border-radius:10px;
+  padding:12px 16px;color:var(--t1);font-size:14px;font-family:var(--font);outline:none;transition:.2s}
+.cfg-input input:focus{border-color:var(--p);box-shadow:0 0 12px var(--pglow)}
+.cfg-input input::placeholder{color:var(--t4)}
+
+/* ═══ SCREEN 3: GENERATING ═══ */
+.s3-content{display:flex;flex-direction:column;align-items:center;justify-content:center;
+  padding:40px 32px;text-align:center;height:100%}
+.gen-dino{font-size:80px;margin-bottom:16px;animation:bounce 2s ease-in-out infinite}
+@keyframes bounce{0%,100%{transform:translateY(0)}50%{transform:translateY(-12px)}}
+.gen-status{font-size:20px;font-weight:700;margin-bottom:8px;letter-spacing:-.3px}
+.gen-sub{font-size:13px;color:var(--t3);margin-bottom:24px}
+.gen-track{width:100%;max-width:400px;background:var(--s2);border-radius:100px;height:10px;overflow:hidden;margin-bottom:12px;
+  border:1px solid var(--border)}
+.gen-fill{height:100%;border-radius:100px;background:linear-gradient(90deg,var(--p),var(--pk));width:0%;transition:width .4s}
+.gen-percent{font-size:16px;font-weight:800;color:var(--p2);margin-bottom:28px;font-variant-numeric:tabular-nums}
+.gen-pages{display:flex;gap:8px;justify-content:center;margin-bottom:24px}
+.gp{width:56px;height:56px;background:var(--s2);border:1.5px solid var(--border);border-radius:12px;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;transition:.4s}
+.gp.done{border-color:var(--g);background:rgba(52,211,153,.08)}
+.gp.done .gp-ico{color:var(--g)}
+.gp.cur{border-color:var(--p);background:var(--pglow);animation:gpPulse 1.5s infinite}
+@keyframes gpPulse{0%,100%{box-shadow:0 0 0 0 var(--pglow)}50%{box-shadow:0 0 16px 2px var(--pglow2)}}
+.gp.cur .gp-ico{color:var(--p2)}
+.gp .gp-ico{font-size:16px;color:var(--t4);transition:.3s}
+.gp .gp-num{font-size:9px;font-weight:600;color:var(--t4);margin-top:2px}
+.gen-tip{font-size:12px;color:var(--t4);display:flex;align-items:center;gap:6px}
+
+.gen-messages{margin-top:16px;max-width:400px;width:100%}
+.gen-msg{font-size:12px;color:var(--t3);padding:6px 0;opacity:0;transform:translateY(8px);
+  transition:opacity .4s,transform .4s;display:flex;align-items:center;gap:6px}
+.gen-msg.show{opacity:1;transform:translateY(0)}
+.gen-msg .gm-dot{width:4px;height:4px;border-radius:50%;background:var(--p2);flex-shrink:0}
+
+/* ═══ SCREEN 4: READER ═══ */
+.reader-bar{display:flex;align-items:center;justify-content:space-between;padding:10px 24px;
+  background:rgba(14,14,40,.95);border-bottom:1px solid var(--border);flex-shrink:0}
+.rb-left{display:flex;align-items:center;gap:12px}
+.rb-back{font-size:13px;color:var(--t3);cursor:pointer}
+.rb-title{font-size:14px;font-weight:700}
+.rb-right{display:flex;gap:6px}
+.rb-btn{background:var(--s3);border:1px solid var(--border);border-radius:8px;padding:6px 12px;
+  font-size:11px;color:var(--t2);cursor:pointer;transition:.2s}
+.rb-btn:hover{border-color:var(--border2);color:var(--t1)}
+.rb-btn.on{border-color:var(--p);color:var(--p2);background:var(--pglow)}
+
+.reader-main{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:24px 32px;position:relative;overflow:hidden}
+.rd-illust{width:100%;max-width:480px;height:240px;border-radius:16px;margin-bottom:20px;position:relative;overflow:hidden}
+.rd-illust .scene-bg{position:absolute;inset:0;transition:opacity .6s}
+.rd-illust .scene-emoji{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
+  font-size:64px;text-shadow:0 8px 32px rgba(0,0,0,.4);transition:opacity .5s,transform .5s}
+.rd-illust .stars span{position:absolute;width:2px;height:2px;background:#fff;border-radius:50%;opacity:.5}
+.rd-text{font-size:18px;font-weight:500;max-width:500px;text-align:center;line-height:1.8;margin-bottom:6px;
+  transition:opacity .4s;letter-spacing:-.2px}
+.rd-text .w{cursor:pointer;border-bottom:2px solid transparent;transition:.2s;padding:0 1px}
+.rd-text .w:hover{color:var(--p2);border-bottom-color:var(--p)}
+.rd-trans{font-size:13px;color:var(--t3);margin-bottom:16px;font-style:italic;transition:opacity .4s}
+
+.word-tip{background:var(--s2);border:1px solid var(--border2);border-radius:12px;padding:14px 18px;
+  max-width:320px;width:100%;text-align:left;opacity:0;transform:translateY(8px);
+  transition:opacity .3s,transform .3s;margin-bottom:12px;position:absolute;bottom:80px}
+.word-tip.show{opacity:1;transform:translateY(0)}
+.wt-word{font-size:16px;font-weight:700;color:var(--p2);display:flex;align-items:center;gap:8px}
+.wt-word .play{width:22px;height:22px;border-radius:50%;background:var(--pglow);border:1px solid var(--border2);
+  display:inline-flex;align-items:center;justify-content:center;font-size:10px;cursor:pointer}
+.wt-phonetic{font-size:11px;color:var(--t3);font-family:'SF Mono',monospace;margin:2px 0}
+.wt-meaning{font-size:12px;color:var(--t2)}
+
+.reader-pager{display:flex;align-items:center;justify-content:center;gap:16px;padding:14px;border-top:1px solid var(--border);flex-shrink:0}
+.pg-arrow{width:36px;height:36px;border-radius:10px;background:var(--s2);border:1px solid var(--border);
+  display:flex;align-items:center;justify-content:center;font-size:14px;color:var(--t2);cursor:pointer;transition:.2s}
+.pg-arrow:hover{border-color:var(--border2);color:var(--t1)}
+.pg-arrow.disabled{opacity:.3;pointer-events:none}
+.pg-dots{display:flex;gap:5px}
+.pg-d{width:7px;height:7px;border-radius:50%;background:var(--s3);transition:.2s;cursor:pointer}
+.pg-d.on{background:var(--p);box-shadow:0 0 8px rgba(124,92,252,.4)}
+.pg-num{font-size:12px;color:var(--t3);font-weight:600;min-width:44px;text-align:center}
+
+.reader-dino{display:flex;align-items:center;gap:12px;padding:12px 24px;background:var(--s1);border-top:1px solid var(--border);flex-shrink:0}
+.rd-avatar{width:36px;height:36px;border-radius:10px;background:linear-gradient(135deg,#34d399,#059669);
+  display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0}
+.rd-dmsg{flex:1;font-size:12px;color:var(--t2);line-height:1.5}
+.rd-dmsg strong{color:var(--t1)}
+.rd-action{background:linear-gradient(135deg,var(--p),#9333ea);color:#fff;border:none;border-radius:8px;
+  padding:8px 14px;font-size:11px;font-weight:600;cursor:pointer;white-space:nowrap}
+
+/* ═══ SCREEN 5: COMPLETE ═══ */
+.s5-content{display:flex;flex-direction:column;align-items:center;padding:32px;text-align:center;height:100%;overflow-y:auto}
+.s5-emoji{font-size:72px;margin-bottom:12px;animation:tada 1s ease}
+@keyframes tada{0%{transform:scale(1)}10%,20%{transform:scale(.9) rotate(-3deg)}
+  30%,50%,70%,90%{transform:scale(1.1) rotate(3deg)}40%,60%,80%{transform:scale(1.1) rotate(-3deg)}100%{transform:scale(1)}}
+.s5-title{font-size:24px;font-weight:800;margin-bottom:6px;letter-spacing:-.5px}
+.s5-sub{font-size:13px;color:var(--t3);margin-bottom:28px}
+.s5-stats{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;width:100%;max-width:480px;margin-bottom:28px}
+.stat{background:var(--s2);border:1px solid var(--border);border-radius:12px;padding:16px 8px}
+.stat .sv{font-size:24px;font-weight:800}.stat .sv.v1{color:var(--g)}.stat .sv.v2{color:var(--b)}
+.stat .sv.v3{color:var(--o)}.stat .sv.v4{color:var(--pk)}
+.stat .sl{font-size:10px;color:var(--t3);margin-top:2px}
+.s5-recs-label{font-size:13px;color:var(--t2);margin-bottom:12px}
+.s5-recs{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;width:100%;max-width:480px;margin-bottom:24px}
+.rec{background:var(--s2);border:1px solid var(--border);border-radius:12px;padding:18px 12px;
+  cursor:pointer;transition:.3s;text-align:center}
+.rec:hover{border-color:var(--border2);transform:translateY(-3px);box-shadow:0 8px 24px rgba(0,0,0,.2)}
+.rec .r-ico{font-size:28px;margin-bottom:6px}.rec .r-name{font-size:13px;font-weight:600;color:var(--t1)}
+.rec .r-type{font-size:10px;color:var(--t4)}
+.s5-actions{display:flex;gap:10px;flex-wrap:wrap;justify-content:center}
+.s5-btn{padding:10px 22px;border-radius:10px;font-size:12px;font-weight:600;cursor:pointer;border:none;transition:.25s}
+.s5-btn.primary{background:linear-gradient(135deg,var(--p),#9333ea);color:#fff;box-shadow:0 4px 16px rgba(124,92,252,.3)}
+.s5-btn.ghost{background:var(--s2);border:1px solid var(--border);color:var(--t2)}
+.s5-btn:hover{transform:translateY(-1px)}
+
+/* ═══ VOICE RECORDING UI ═══ */
+.voice-area{display:none;flex-direction:column;align-items:center;margin:20px 0}
+.voice-area.show{display:flex}
+.voice-btn{width:80px;height:80px;border-radius:50%;background:linear-gradient(135deg,var(--p),#9333ea);
+  border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:32px;
+  box-shadow:0 4px 24px rgba(124,92,252,.4);transition:.3s;position:relative}
+.voice-btn:hover{transform:scale(1.05)}
+.voice-btn.recording{animation:recPulse 1.5s infinite}
+@keyframes recPulse{0%{box-shadow:0 0 0 0 rgba(124,92,252,.4)}70%{box-shadow:0 0 0 20px rgba(124,92,252,0)}100%{box-shadow:0 0 0 0 rgba(124,92,252,0)}}
+.voice-hint{font-size:12px;color:var(--t3);margin-top:10px}
+.voice-result{display:none;margin-top:16px;background:var(--s2);border:1px solid var(--border);
+  border-radius:12px;padding:14px 20px;max-width:360px;width:100%}
+.voice-result.show{display:block;animation:fadeUp .4s ease}
+@keyframes fadeUp{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+.vr-label{font-size:11px;color:var(--t3);margin-bottom:4px}
+.vr-text{font-size:15px;color:var(--t1);font-weight:600;margin-bottom:8px}
+.vr-actions{display:flex;gap:8px}
+.vr-btn{padding:6px 14px;border-radius:8px;font-size:11px;font-weight:600;cursor:pointer;border:none;transition:.2s}
+.vr-btn.ok{background:var(--p);color:#fff}
+.vr-btn.retry{background:var(--s3);color:var(--t2);border:1px solid var(--border)}
+
+/* ═══ WAVE ANIMATION ═══ */
+.wave-bars{display:flex;align-items:center;gap:3px;height:32px;margin:12px 0;display:none}
+.wave-bars.show{display:flex}
+.wave-bar{width:3px;background:var(--p2);border-radius:2px;animation:wave 1.2s ease-in-out infinite}
+.wave-bar:nth-child(1){animation-delay:0s;height:12px}.wave-bar:nth-child(2){animation-delay:.1s;height:20px}
+.wave-bar:nth-child(3){animation-delay:.2s;height:28px}.wave-bar:nth-child(4){animation-delay:.3s;height:16px}
+.wave-bar:nth-child(5){animation-delay:.4s;height:24px}.wave-bar:nth-child(6){animation-delay:.5s;height:10px}
+.wave-bar:nth-child(7){animation-delay:.6s;height:18px}
+@keyframes wave{0%,100%{transform:scaleY(.4)}50%{transform:scaleY(1)}}
+
+/* ═══ RESPONSIVE ═══ */
+@media(max-width:768px){
+  .ipad{border-radius:20px;aspect-ratio:3/4}
+  .input-cards{grid-template-columns:1fr;gap:8px}
+  .s5-stats{grid-template-columns:repeat(2,1fr)}
+  .sample-cards{grid-template-columns:1fr}
+  .cfg-options{flex-direction:column}
+  .s5-recs{grid-template-columns:1fr}
+}
+</style>
+</head>
+<body>
+
+<div class="hdr">
+  <div class="chip"><span class="dot"></span> Interactive Prototype</div>
+  <h1>🦖 Dino AI 绘本工坊</h1>
+  <p>可点击交互原型 · 体验完整用户旅程</p>
+</div>
+
+<div class="ipad">
+  <div class="ipad-status">
+    <span>9:41</span>
+    <div class="cam"></div>
+    <span>100% 🔋</span>
+  </div>
+  <div class="ipad-body">
+
+    <!-- ══════════ SCREEN 1: 输入素材 ══════════ -->
+    <div class="screen active" id="screen1">
+      <div class="topbar">
+        <div class="logo"><span>🦖</span> Dino Storybook Studio</div>
+      </div>
+      <div class="steps-bar" id="stepsBar1">
+        <div class="si cur"><div class="num">1</div> 输入素材</div>
+        <div class="si-line"></div>
+        <div class="si"><div class="num">2</div> 配置偏好</div>
+        <div class="si-line"></div>
+        <div class="si"><div class="num">3</div> AI 生成</div>
+        <div class="si-line"></div>
+        <div class="si"><div class="num">4</div> 开始阅读</div>
+      </div>
+      <div class="scroll">
+        <div class="s1-content">
+          <div class="dino-bubble">
+            <div class="dino-av">🦖</div>
+            <div class="dino-msg"><strong>Dino：</strong>"想看什么故事？选一种方式告诉我！"</div>
+          </div>
+          <div class="input-cards" id="inputCards">
+            <div class="inp-card c1" onclick="selectInput(0)">
+              <div class="ic-icon">📸</div>
+              <div class="ic-name">拍照 / 上传</div>
+              <div class="ic-desc">把你喜欢的东西拍下来</div>
+            </div>
+            <div class="inp-card c2" onclick="selectInput(1)">
+              <div class="ic-icon">🎙️</div>
+              <div class="ic-name">说出故事</div>
+              <div class="ic-desc">长按说话，告诉 Dino</div>
+            </div>
+            <div class="inp-card c3 sel" onclick="selectInput(2)">
+              <div class="ic-icon">🏷️</div>
+              <div class="ic-name">选择主题</div>
+              <div class="ic-desc">从精选主题里挑一个</div>
+            </div>
+          </div>
+
+          <!-- Voice area (hidden by default) -->
+          <div class="voice-area" id="voiceArea">
+            <div class="voice-btn" id="voiceBtn" onmousedown="startRec()" onmouseup="stopRec()">🎙️</div>
+            <div class="wave-bars" id="waveBars">
+              <div class="wave-bar"></div><div class="wave-bar"></div><div class="wave-bar"></div>
+              <div class="wave-bar"></div><div class="wave-bar"></div><div class="wave-bar"></div><div class="wave-bar"></div>
+            </div>
+            <div class="voice-hint" id="voiceHint">长按按钮开始说话</div>
+            <div class="voice-result" id="voiceResult">
+              <div class="vr-label">🤖 识别结果：</div>
+              <div class="vr-text">"我想看恐龙去太空探险的故事"</div>
+              <div class="vr-actions">
+                <div class="vr-btn ok" onclick="confirmVoice()">✓ 就这个！</div>
+                <div class="vr-btn retry" onclick="retryVoice()">🎙️ 重新说</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Theme area -->
+          <div id="themeArea">
+            <div class="sec-title">🔥 热门主题 · 点一下就开始</div>
+            <div class="theme-pills" id="themePills">
+              <span class="tp" onclick="selectTheme(this)">🐱 动物冒险</span>
+              <span class="tp" onclick="selectTheme(this)">🚀 太空探索</span>
+              <span class="tp sel" onclick="selectTheme(this)">🏰 童话城堡</span>
+              <span class="tp" onclick="selectTheme(this)">🌊 海底世界</span>
+              <span class="tp" onclick="selectTheme(this)">🦸 英雄故事</span>
+              <span class="tp" onclick="selectTheme(this)">🎄 节日故事</span>
+            </div>
+          </div>
+
+          <div class="sec-title" id="sampleTitle">📷 示例素材 · 体验一下</div>
+          <div class="sample-cards" id="sampleCards">
+            <div class="samp" onclick="this.style.borderColor='var(--p)'">
+              <div class="s-img a">🧸</div>
+              <div class="s-info"><div class="s-name">泰迪熊照片</div><div class="s-size">teddy.jpg · 2.4MB</div></div>
+              <div class="s-btn">用这张 →</div>
+            </div>
+            <div class="samp" onclick="this.style.borderColor='var(--p)'">
+              <div class="s-img b">🐱</div>
+              <div class="s-info"><div class="s-name">小猫咪照片</div><div class="s-size">kitty.jpg · 1.8MB</div></div>
+              <div class="s-btn">用这张 →</div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="bottombar">
+        <div class="bb-hint">已选择：🏰 童话城堡</div>
+        <button class="bb-btn bb-primary" onclick="goStep(2)">下一步 →</button>
+      </div>
+    </div>
+
+    <!-- ══════════ SCREEN 2: 配置偏好 ══════════ -->
+    <div class="screen" id="screen2">
+      <div class="topbar">
+        <div class="logo"><span>🦖</span> Dino Storybook Studio</div>
+      </div>
+      <div class="steps-bar">
+        <div class="si done"><div class="num">✓</div> 输入素材</div>
+        <div class="si-line done"></div>
+        <div class="si cur"><div class="num">2</div> 配置偏好</div>
+        <div class="si-line"></div>
+        <div class="si"><div class="num">3</div> AI 生成</div>
+        <div class="si-line"></div>
+        <div class="si"><div class="num">4</div> 开始阅读</div>
+      </div>
+      <div class="scroll">
+        <div class="s2-content">
+          <div class="dino-bubble">
+            <div class="dino-av">🦖</div>
+            <div class="dino-msg"><strong>Dino：</strong>"太棒了！让我看看要怎么给你做这本绘本..."</div>
+          </div>
+          <div class="preview-row">
+            <div class="preview-img">🏰</div>
+            <div class="preview-info">
+              <div class="pi-title">童话城堡主题</div>
+              <div class="pi-sub">AI 将在童话城堡世界里为你创作故事</div>
+              <div class="pi-badge">✓ 素材已就绪</div>
+            </div>
+          </div>
+
+          <div class="cfg-group">
+            <div class="cfg-label">📚 故事难度 <span class="req">必填</span></div>
+            <div class="cfg-options" id="levelOpts">
+              <div class="cfg-opt" onclick="selectCfg(this,'levelOpts')"><div class="co-main">L1 简单</div><div class="co-sub">4-5岁 · 入门</div></div>
+              <div class="cfg-opt sel" onclick="selectCfg(this,'levelOpts')"><div class="co-main">L2 适中</div><div class="co-sub">5-7岁 · 推荐 ⭐</div></div>
+              <div class="cfg-opt" onclick="selectCfg(this,'levelOpts')"><div class="co-main">L3 挑战</div><div class="co-sub">7-9岁</div></div>
+              <div class="cfg-opt" onclick="selectCfg(this,'levelOpts')"><div class="co-main">L4 高级</div><div class="co-sub">9-13岁</div></div>
+            </div>
+          </div>
+
+          <div class="cfg-group">
+            <div class="cfg-label">📖 故事长度 <span class="req">必填</span></div>
+            <div class="cfg-options" id="lengthOpts">
+              <div class="cfg-opt" onclick="selectCfg(this,'lengthOpts')"><div class="co-main">6 页</div><div class="co-sub">短篇 · 约2分钟</div></div>
+              <div class="cfg-opt sel" onclick="selectCfg(this,'lengthOpts')"><div class="co-main">8 页</div><div class="co-sub">标准 · 约3分钟 ⭐</div></div>
+              <div class="cfg-opt" onclick="selectCfg(this,'lengthOpts')"><div class="co-main">12 页</div><div class="co-sub">长篇 · 约5分钟</div></div>
+            </div>
+          </div>
+
+          <div class="cfg-group">
+            <div class="cfg-label">🎭 故事风格 <span style="font-size:10px;color:var(--t4)">可选</span></div>
+            <div class="cfg-options" id="styleOpts">
+              <div class="cfg-opt sel" onclick="selectCfg(this,'styleOpts')"><div class="co-main">🗡️ 冒险</div></div>
+              <div class="cfg-opt" onclick="selectCfg(this,'styleOpts')"><div class="co-main">😄 搞笑</div></div>
+              <div class="cfg-opt" onclick="selectCfg(this,'styleOpts')"><div class="co-main">🧠 科普</div></div>
+              <div class="cfg-opt" onclick="selectCfg(this,'styleOpts')"><div class="co-main">💕 温馨</div></div>
+            </div>
+          </div>
+
+          <div class="cfg-group">
+            <div class="cfg-label">✏️ 给主角起个名字 <span style="font-size:10px;color:var(--t4)">可选</span></div>
+            <div class="cfg-input"><input type="text" placeholder="例如：Luna、Max..." value="Luna"></div>
+          </div>
+        </div>
+      </div>
+      <div class="bottombar">
+        <button class="bb-btn bb-ghost" onclick="goStep(1)">← 返回</button>
+        <button class="bb-btn bb-primary" onclick="goStep(3)">✨ 开始创作！</button>
+      </div>
+    </div>
+
+    <!-- ══════════ SCREEN 3: AI 生成中 ══════════ -->
+    <div class="screen" id="screen3">
+      <div class="topbar">
+        <div class="logo"><span>🦖</span> Dino Storybook Studio</div>
+      </div>
+      <div class="steps-bar">
+        <div class="si done"><div class="num">✓</div> 输入素材</div>
+        <div class="si-line done"></div>
+        <div class="si done"><div class="num">✓</div> 配置偏好</div>
+        <div class="si-line done"></div>
+        <div class="si cur"><div class="num">3</div> AI 生成</div>
+        <div class="si-line"></div>
+        <div class="si"><div class="num">4</div> 开始阅读</div>
+      </div>
+      <div class="s3-content">
+        <div class="gen-dino" id="genDino">🦖</div>
+        <div class="gen-status" id="genStatus">✨ Dino 正在为你创作专属绘本...</div>
+        <div class="gen-sub" id="genSub">请稍等，魔法正在进行中</div>
+        <div class="gen-track"><div class="gen-fill" id="genFill"></div></div>
+        <div class="gen-percent" id="genPercent">0%</div>
+        <div class="gen-pages" id="genPages">
+          <div class="gp" id="gp0"><div class="gp-ico">·</div><div class="gp-num">封面</div></div>
+          <div class="gp" id="gp1"><div class="gp-ico">·</div><div class="gp-num">p.1</div></div>
+          <div class="gp" id="gp2"><div class="gp-ico">·</div><div class="gp-num">p.2</div></div>
+          <div class="gp" id="gp3"><div class="gp-ico">·</div><div class="gp-num">p.3</div></div>
+          <div class="gp" id="gp4"><div class="gp-ico">·</div><div class="gp-num">p.4</div></div>
+          <div class="gp" id="gp5"><div class="gp-ico">·</div><div class="gp-num">p.5</div></div>
+          <div class="gp" id="gp6"><div class="gp-ico">·</div><div class="gp-num">p.6</div></div>
+          <div class="gp" id="gp7"><div class="gp-ico">·</div><div class="gp-num">p.7</div></div>
+          <div class="gp" id="gp8"><div class="gp-ico">·</div><div class="gp-num">p.8</div></div>
+        </div>
+        <div class="gen-messages" id="genMsgs">
+          <div class="gen-msg" id="gm0"><span class="gm-dot"></span>让我想想怎么讲这个故事...</div>
+          <div class="gen-msg" id="gm1"><span class="gm-dot"></span>故事想好了！开始画画啦！</div>
+          <div class="gen-msg" id="gm2"><span class="gm-dot"></span>封面画好了！✨</div>
+          <div class="gen-msg" id="gm3"><span class="gm-dot"></span>第 1 页画好了！</div>
+          <div class="gen-msg" id="gm4"><span class="gm-dot"></span>第 2 页也好了！画得不错~</div>
+          <div class="gen-msg" id="gm5"><span class="gm-dot"></span>快画完了，再等一下下...</div>
+          <div class="gen-msg" id="gm6"><span class="gm-dot"></span>正在给每一页配上朗读语音 🔊</div>
+          <div class="gen-msg" id="gm7"><span class="gm-dot"></span>最后检查一下安全性... ✅</div>
+          <div class="gen-msg" id="gm8"><span class="gm-dot"></span>完成啦！翻开你的专属绘本吧！🎉</div>
+        </div>
+        <div class="gen-tip">💡 你知道吗？Dino 最喜欢画星空了！</div>
+      </div>
+    </div>
+
+    <!-- ══════════ SCREEN 4: 阅读器 ══════════ -->
+    <div class="screen" id="screen4">
+      <div class="reader-bar">
+        <div class="rb-left">
+          <span class="rb-back">←</span>
+          <span class="rb-title" id="bookTitle">Luna's Castle Adventure</span>
+        </div>
+        <div class="rb-right">
+          <span class="rb-btn" id="btnAudio" onclick="toggleBtn(this)">🔊 朗读</span>
+          <span class="rb-btn" id="btnTrans" onclick="toggleTrans()">Aa 译文</span>
+          <span class="rb-btn" id="btnFav" onclick="toggleBtn(this)">⭐ 收藏</span>
+        </div>
+      </div>
+      <div class="reader-main" id="readerMain">
+        <div class="rd-illust" id="rdIllust">
+          <div class="scene-bg" id="sceneBg" style="background:linear-gradient(135deg,#0a0a30,#1a1040,#2a1860,#1a2050)"></div>
+          <div class="stars"><span style="top:15%;left:20%"></span><span style="top:25%;left:45%"></span>
+            <span style="top:10%;left:70%"></span><span style="top:40%;left:85%"></span>
+            <span style="top:60%;left:15%"></span><span style="top:35%;left:55%"></span></div>
+          <div class="scene-emoji" id="sceneEmoji">🏰✨👸</div>
+        </div>
+        <div class="rd-text" id="rdText"></div>
+        <div class="rd-trans" id="rdTrans" style="display:none"></div>
+        <div class="word-tip" id="wordTip">
+          <div class="wt-word"><span id="wtWord"></span><span class="play">🔊</span></div>
+          <div class="wt-phonetic" id="wtPhonetic"></div>
+          <div class="wt-meaning" id="wtMeaning"></div>
+        </div>
+      </div>
+      <div class="reader-pager">
+        <div class="pg-arrow" id="prevPage" onclick="changePage(-1)">‹</div>
+        <div class="pg-dots" id="pgDots"></div>
+        <div class="pg-num" id="pgNum">1 / 8</div>
+        <div class="pg-arrow" id="nextPage" onclick="changePage(1)">›</div>
+      </div>
+      <div class="reader-dino">
+        <div class="rd-avatar">🦖</div>
+        <div class="rd-dmsg" id="dinMsg"><strong>Dino：</strong><span id="dinTxt">"这个故事的主角是谁呀？"</span></div>
+        <div class="rd-action" id="dinAction">🎤 跟读</div>
+      </div>
+    </div>
+
+    <!-- ══════════ SCREEN 5: 完成 ══════════ -->
+    <div class="screen" id="screen5">
+      <div class="topbar">
+        <div class="logo"><span>🦖</span> Dino Storybook Studio</div>
+      </div>
+      <div class="s5-content">
+        <div class="s5-emoji">🎉</div>
+        <div class="s5-title">恭喜！你读完了一整本绘本！</div>
+        <div class="s5-sub">📖 Luna's Castle Adventure · Level 2 · 8 页 · AI 为你专属创作</div>
+        <div class="s5-stats">
+          <div class="stat"><div class="sv v1">3</div><div class="sl">📚 累计已读</div></div>
+          <div class="stat"><div class="sv v2">6</div><div class="sl">🆕 本次新词</div></div>
+          <div class="stat"><div class="sv v3">4:12</div><div class="sl">⏱️ 阅读时长</div></div>
+          <div class="stat"><div class="sv v4">92</div><div class="sl">🎯 跟读得分</div></div>
+        </div>
+        <div class="s5-recs-label">🤖 Dino 推荐 · "喜欢童话故事？试试这些："</div>
+        <div class="s5-recs">
+          <div class="rec" onclick="goStep(1)"><div class="r-ico">🏰</div><div class="r-name">魔法森林</div><div class="r-type">官方精选</div></div>
+          <div class="rec" onclick="goStep(1)"><div class="r-ico">🌟</div><div class="r-name">精灵学院</div><div class="r-type">官方精选</div></div>
+          <div class="rec" onclick="goStep(1)"><div class="r-ico">✨</div><div class="r-name">再来一本</div><div class="r-type">AI 创作</div></div>
+        </div>
+        <div class="s5-actions">
+          <button class="s5-btn primary" onclick="goStep(1)">✨ 再创作一本</button>
+          <button class="s5-btn ghost">🏠 回到书架</button>
+          <button class="s5-btn ghost">🎮 单词消消乐</button>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+// ═══════════════════════════════════════
+//  BOOK DATA
+// ═══════════════════════════════════════
+const pages = [
+  { emoji:'🏰✨👸', bg:'linear-gradient(135deg,#1a0a30,#2a1850,#1a2060)',
+    en:'"Once upon a time, in a <w data-w="magical" data-p="/ˈmæd͡ʒɪkl/" data-m="有魔法的">magical</w> <w data-w="castle" data-p="/ˈkæsl/" data-m="城堡">castle</w>, there lived a brave girl named Luna."',
+    zh:'"从前，在一座神奇的城堡里，住着一个勇敢的女孩，名叫 Luna。"',
+    dino:'"这个故事的主角是谁呀？"', action:'💬 回答'},
+  { emoji:'👸🚪🔮', bg:'linear-gradient(135deg,#1a1040,#2a1860,#3a2070)',
+    en:'"One morning, Luna found a <w data-w="secret" data-p="/ˈsiːkrɪt/" data-m="秘密的">secret</w> <w data-w="door" data-p="/dɔːr/" data-m="门">door</w> behind the big painting."',
+    zh:'"一天早上，Luna 在大画后面发现了一扇秘密的门。"',
+    dino:'"secret 是什么意思呀？跟我读！se-cret！"', action:'🎤 跟读'},
+  { emoji:'🌿🦋🌸', bg:'linear-gradient(135deg,#0a2020,#1a3830,#0a3020)',
+    en:'"She <w data-w="opened" data-p="/ˈoʊpənd/" data-m="打开（open 的过去式）">opened</w> it and stepped into a <w data-w="garden" data-p="/ˈɡɑːrdn/" data-m="花园">garden</w> full of glowing <w data-w="flowers" data-p="/ˈflaʊərz/" data-m="花朵">flowers</w>."',
+    zh:'"她打开门，走进了一个开满发光花朵的花园。"',
+    dino:'"你猜花园里还有什么？"', action:'💬 回答'},
+  { emoji:'🐉💜🌙', bg:'linear-gradient(135deg,#1a0a2a,#2a1050,#1a1a40)',
+    en:'"A friendly <w data-w="dragon" data-p="/ˈdræɡən/" data-m="龙">dragon</w> with <w data-w="purple" data-p="/ˈpɜːrpl/" data-m="紫色的">purple</w> wings was waiting for her."',
+    zh:'"一只有着紫色翅膀的友善的龙正等着她。"',
+    dino:'"dragon，跟我读一遍！dra-gon！"', action:'🎤 跟读'},
+  { emoji:'👸🐉☁️', bg:'linear-gradient(135deg,#0a1a3a,#1a2a5a,#0a2040)',
+    en:'"<w data-w="Together" data-p="/təˈɡeðər/" data-m="一起">Together</w>, they <w data-w="flew" data-p="/fluː/" data-m="飞（fly 的过去式）">flew</w> high above the <w data-w="clouds" data-p="/klaʊdz/" data-m="云">clouds</w>."',
+    zh:'"他们一起飞到了云层之上。"',
+    dino:'"flew 是 fly 的过去式哦！"', action:'👍 知道了'},
+  { emoji:'⭐🏰🌈', bg:'linear-gradient(135deg,#1a1030,#2a1860,#1a2050)',
+    en:'"They found a <w data-w="rainbow" data-p="/ˈreɪnboʊ/" data-m="彩虹">rainbow</w> <w data-w="bridge" data-p="/brɪd͡ʒ/" data-m="桥">bridge</w> that led to a golden tower."',
+    zh:'"他们找到了一座通向金色高塔的彩虹桥。"',
+    dino:'"rainbow 是什么意思？"', action:'💬 回答'},
+  { emoji:'👸🗝️💎', bg:'linear-gradient(135deg,#2a1a10,#3a2a20,#2a1a30)',
+    en:'"Luna used a <w data-w="golden" data-p="/ˈɡoʊldən/" data-m="金色的">golden</w> <w data-w="key" data-p="/kiː/" data-m="钥匙">key</w> to open the treasure <w data-w="chest" data-p="/t͡ʃest/" data-m="箱子">chest</w>."',
+    zh:'"Luna 用一把金钥匙打开了宝箱。"',
+    dino:'"key 怎么读？跟我说！"', action:'🎤 跟读'},
+  { emoji:'👸🐉🌟', bg:'linear-gradient(135deg,#1a0a30,#2a1860,#1a2060)',
+    en:'"<w data-w="Inside" data-p="/ɪnˈsaɪd/" data-m="里面">Inside</w> was the most <w data-w="beautiful" data-p="/ˈbjuːtɪfl/" data-m="美丽的">beautiful</w> storybook she had ever seen. The end."',
+    zh:'"里面是她见过的最美丽的故事书。故事结束了。"',
+    dino:'"太棒了！你读完了整本书！🎉"', action:'🎉 完成'}
+];
+
+let currentPage = 0;
+let currentScreen = 1;
+let showTrans = false;
+let genTimer = null;
+
+// ═══════════════════════════════════════
+//  NAVIGATION
+// ═══════════════════════════════════════
+function goStep(n) {
+  if(genTimer){clearInterval(genTimer);genTimer=null}
+  const prev = document.getElementById('screen'+currentScreen);
+  const next = document.getElementById('screen'+n);
+  prev.classList.remove('active');
+  prev.classList.add('exit');
+  setTimeout(()=>{prev.classList.remove('exit')},500);
+  setTimeout(()=>{
+    next.classList.add('active');
+    if(n===3) startGenAnimation();
+    if(n===4) initReader();
+  },80);
+  currentScreen = n;
+}
+
+// ═══════════════════════════════════════
+//  SCREEN 1: INPUT
+// ═══════════════════════════════════════
+function selectInput(idx){
+  document.querySelectorAll('.inp-card').forEach((c,i)=>{
+    c.classList.toggle('sel',i===idx);
+  });
+  const voiceArea = document.getElementById('voiceArea');
+  const themeArea = document.getElementById('themeArea');
+  const sampleTitle = document.getElementById('sampleTitle');
+  const sampleCards = document.getElementById('sampleCards');
+
+  if(idx===1){
+    voiceArea.classList.add('show');
+    themeArea.style.display='none';
+    sampleTitle.style.display='none';
+    sampleCards.style.display='none';
+    document.querySelector('.bb-hint').textContent='已选择：🎙️ 语音输入';
+  } else if(idx===0){
+    voiceArea.classList.remove('show');
+    themeArea.style.display='none';
+    sampleTitle.style.display='';
+    sampleCards.style.display='';
+    document.querySelector('.bb-hint').textContent='已选择：📸 拍照上传';
+  } else {
+    voiceArea.classList.remove('show');
+    themeArea.style.display='';
+    sampleTitle.style.display='';
+    sampleCards.style.display='';
+    document.querySelector('.bb-hint').textContent='已选择：🏰 童话城堡';
+  }
+}
+
+function selectTheme(el){
+  document.querySelectorAll('.tp').forEach(e=>e.classList.remove('sel'));
+  el.classList.add('sel');
+  document.querySelector('.bb-hint').textContent='已选择：'+el.textContent.trim();
+}
+
+function startRec(){
+  const btn=document.getElementById('voiceBtn');
+  const wave=document.getElementById('waveBars');
+  const hint=document.getElementById('voiceHint');
+  btn.classList.add('recording');
+  wave.classList.add('show');
+  hint.textContent='正在录音...松手结束';
+}
+function stopRec(){
+  const btn=document.getElementById('voiceBtn');
+  const wave=document.getElementById('waveBars');
+  const hint=document.getElementById('voiceHint');
+  const result=document.getElementById('voiceResult');
+  btn.classList.remove('recording');
+  wave.classList.remove('show');
+  hint.textContent='识别中...';
+  setTimeout(()=>{
+    hint.textContent='';
+    result.classList.add('show');
+    document.querySelector('.bb-hint').textContent='已选择：🎙️ "恐龙去太空探险"';
+  },800);
+}
+function confirmVoice(){goStep(2)}
+function retryVoice(){
+  document.getElementById('voiceResult').classList.remove('show');
+  document.getElementById('voiceHint').textContent='长按按钮开始说话';
+}
+
+// ═══════════════════════════════════════
+//  SCREEN 2: CONFIG
+// ═══════════════════════════════════════
+function selectCfg(el,groupId){
+  document.querySelectorAll('#'+groupId+' .cfg-opt').forEach(e=>e.classList.remove('sel'));
+  el.classList.add('sel');
+}
+
+// ═══════════════════════════════════════
+//  SCREEN 3: GENERATION ANIMATION
+// ═══════════════════════════════════════
+function startGenAnimation(){
+  const fill=document.getElementById('genFill');
+  const pct=document.getElementById('genPercent');
+  const status=document.getElementById('genStatus');
+  const sub=document.getElementById('genSub');
+  let p=0;
+
+  // Reset
+  fill.style.width='0%';
+  pct.textContent='0%';
+  for(let i=0;i<=8;i++){
+    const gp=document.getElementById('gp'+i);
+    gp.className='gp';
+    gp.querySelector('.gp-ico').textContent='·';
+  }
+  document.querySelectorAll('.gen-msg').forEach(m=>m.classList.remove('show'));
+
+  const timeline=[
+    {at:0,  msg:0, status:'✨ Dino 正在为你创作专属绘本...', sub:'让 AI 想一个好故事'},
+    {at:8,  msg:1, status:'📝 故事已写好！', sub:'开始画插画啦'},
+    {at:15, msg:2, page:0},
+    {at:22, msg:3, page:1},
+    {at:30, msg:4, page:2},
+    {at:40, page:3},
+    {at:48, page:4},
+    {at:56, msg:5, page:5},
+    {at:65, page:6},
+    {at:72, page:7},
+    {at:78, msg:6, page:8, status:'🔊 正在配音...', sub:'给每一页录语音'},
+    {at:88, msg:7, status:'🛡️ 安全检查...', sub:'确保内容适合小朋友'},
+    {at:95, msg:8, status:'🎉 完成啦！', sub:'翻开你的专属绘本吧！'},
+  ];
+
+  let ti=0;
+  genTimer = setInterval(()=>{
+    p++;
+    if(p>100){clearInterval(genTimer);genTimer=null;setTimeout(()=>goStep(4),800);return}
+    fill.style.width=p+'%';
+    pct.textContent=p+'%';
+    while(ti<timeline.length && timeline[ti].at<=p){
+      const t=timeline[ti];
+      if(t.msg!==undefined) document.getElementById('gm'+t.msg).classList.add('show');
+      if(t.page!==undefined){
+        const gp=document.getElementById('gp'+t.page);
+        gp.classList.add('done');gp.querySelector('.gp-ico').textContent='✓';
+        // Mark next as current
+        const nxt=document.getElementById('gp'+(t.page+1));
+        if(nxt&&!nxt.classList.contains('done')){
+          document.querySelectorAll('.gp.cur').forEach(g=>g.classList.remove('cur'));
+          nxt.classList.add('cur');nxt.querySelector('.gp-ico').textContent='⏳';
+        }
+      }
+      if(t.status) status.textContent=t.status;
+      if(t.sub) sub.textContent=t.sub;
+      ti++;
+    }
+  },80);
+}
+
+// ═══════════════════════════════════════
+//  SCREEN 4: READER
+// ═══════════════════════════════════════
+function initReader(){
+  currentPage=0;
+  showTrans=false;
+  document.getElementById('rdTrans').style.display='none';
+  document.getElementById('btnTrans').classList.remove('on');
+  renderPage();
+  renderDots();
+}
+
+function renderPage(){
+  const pg=pages[currentPage];
+  document.getElementById('sceneEmoji').textContent=pg.emoji;
+  document.getElementById('sceneBg').style.background=pg.bg;
+  document.getElementById('rdText').innerHTML=pg.en;
+  document.getElementById('rdTrans').textContent=pg.zh;
+  document.getElementById('pgNum').textContent=(currentPage+1)+' / '+pages.length;
+  document.getElementById('dinTxt').textContent=pg.dino;
+  document.getElementById('dinAction').textContent=pg.action;
+  document.getElementById('prevPage').classList.toggle('disabled',currentPage===0);
+  document.getElementById('wordTip').classList.remove('show');
+
+  // Bind word clicks
+  document.querySelectorAll('#rdText w').forEach(w=>{
+    w.classList.add('w');
+    w.addEventListener('click',function(){
+      document.querySelectorAll('#rdText w').forEach(x=>x.classList.remove('hl'));
+      this.classList.add('hl');
+      document.getElementById('wtWord').textContent=this.dataset.w;
+      document.getElementById('wtPhonetic').textContent=this.dataset.p;
+      document.getElementById('wtMeaning').textContent=this.dataset.m;
+      const tip=document.getElementById('wordTip');
+      tip.classList.remove('show');
+      void tip.offsetWidth;
+      tip.classList.add('show');
+    });
+  });
+
+  renderDots();
+}
+
+function renderDots(){
+  const container=document.getElementById('pgDots');
+  container.innerHTML='';
+  for(let i=0;i<pages.length;i++){
+    const d=document.createElement('div');
+    d.className='pg-d'+(i===currentPage?' on':'');
+    d.onclick=(()=>{const idx=i;return()=>{currentPage=idx;renderPage()}})();
+    container.appendChild(d);
+  }
+}
+
+function changePage(dir){
+  const next=currentPage+dir;
+  if(next<0) return;
+  if(next>=pages.length){goStep(5);return}
+  currentPage=next;
+  renderPage();
+}
+
+function toggleTrans(){
+  showTrans=!showTrans;
+  document.getElementById('rdTrans').style.display=showTrans?'':'none';
+  document.getElementById('btnTrans').classList.toggle('on',showTrans);
+}
+function toggleBtn(el){el.classList.toggle('on')}
+
+// Init
+document.addEventListener('DOMContentLoaded',()=>{
+  selectInput(2);
+});
+</script>
+</body>
+</html>
