@@ -111,6 +111,27 @@ body::before{content:'';position:fixed;inset:0;pointer-events:none;z-index:-1;
 .inp-card .ic-icon{font-size:36px;margin-bottom:10px;position:relative;z-index:1}
 .inp-card .ic-name{font-size:14px;font-weight:700;color:var(--t1);margin-bottom:3px;position:relative;z-index:1}
 .inp-card .ic-desc{font-size:11.5px;color:var(--t3);line-height:1.4;position:relative;z-index:1}
+.upload-area{display:none;margin-bottom:16px}
+.upload-area.show{display:block}
+.upload-drop{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;
+  padding:28px 16px;border:2px dashed var(--border2);border-radius:16px;background:var(--s2);
+  cursor:pointer;transition:.25s;text-align:center}
+.upload-drop:hover,.upload-drop.dragover{border-color:var(--p);background:var(--pglow);box-shadow:0 0 24px var(--pglow)}
+.upload-drop .ud-icon{font-size:34px}
+.upload-drop .ud-title{font-size:14px;font-weight:700;color:var(--t1)}
+.upload-drop .ud-sub{font-size:11.5px;color:var(--t3);line-height:1.4}
+.upload-preview{display:none;align-items:center;gap:14px;padding:14px;border:1.5px solid var(--p);
+  border-radius:16px;background:var(--pglow);box-shadow:0 0 24px var(--pglow)}
+.upload-preview.show{display:flex}
+.upload-preview img{width:64px;height:64px;border-radius:12px;object-fit:cover;flex-shrink:0;border:1px solid var(--border2)}
+.up-info{flex:1;min-width:0}
+.up-name{font-size:13px;font-weight:700;color:var(--t1);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.up-meta{font-size:11px;color:var(--g);margin-top:2px}
+.up-bar{height:4px;border-radius:4px;background:var(--s3);margin-top:8px;overflow:hidden}
+.up-bar span{display:block;height:100%;width:0;border-radius:4px;background:linear-gradient(90deg,var(--p),var(--pk));transition:width .9s ease}
+.up-remove{background:var(--s2);border:1px solid var(--border);color:var(--t3);border-radius:8px;
+  width:30px;height:30px;font-size:12px;cursor:pointer;flex-shrink:0}
+.up-remove:hover{color:var(--t1)}
 
 .sec-title{font-size:12px;color:var(--t3);font-weight:600;margin-bottom:12px;display:flex;align-items:center;gap:6px}
 .theme-pills{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:24px}
@@ -400,6 +421,25 @@ body::before{content:'';position:fixed;inset:0;pointer-events:none;z-index:-1;
             </div>
           </div>
 
+          <!-- Upload area (hidden by default) -->
+          <div class="upload-area" id="uploadArea">
+            <label class="upload-drop" id="uploadDrop">
+              <input type="file" id="fileInput" accept="image/*" hidden onchange="handleUpload(this)">
+              <div class="ud-icon">📸</div>
+              <div class="ud-title">点击拍照 / 上传图片</div>
+              <div class="ud-sub">支持 JPG / PNG · 拍下你喜欢的玩具、宠物或画作</div>
+            </label>
+            <div class="upload-preview" id="uploadPreview">
+              <img id="previewImg" alt="预览">
+              <div class="up-info">
+                <div class="up-name" id="previewName">photo.jpg</div>
+                <div class="up-meta" id="previewMeta">✓ 上传成功</div>
+                <div class="up-bar"><span></span></div>
+              </div>
+              <button class="up-remove" onclick="removeUpload()">✕</button>
+            </div>
+          </div>
+
           <!-- Theme area -->
           <div id="themeArea">
             <div class="sec-title">🔥 热门主题 · 点一下就开始</div>
@@ -415,12 +455,12 @@ body::before{content:'';position:fixed;inset:0;pointer-events:none;z-index:-1;
 
           <div class="sec-title" id="sampleTitle">📷 示例素材 · 体验一下</div>
           <div class="sample-cards" id="sampleCards">
-            <div class="samp" onclick="this.style.borderColor='var(--p)'">
+            <div class="samp" onclick="useSample('🧸','teddy.jpg','2.4MB')">
               <div class="s-img a">🧸</div>
               <div class="s-info"><div class="s-name">泰迪熊照片</div><div class="s-size">teddy.jpg · 2.4MB</div></div>
               <div class="s-btn">用这张 →</div>
             </div>
-            <div class="samp" onclick="this.style.borderColor='var(--p)'">
+            <div class="samp" onclick="useSample('🐱','kitty.jpg','1.8MB')">
               <div class="s-img b">🐱</div>
               <div class="s-info"><div class="s-name">小猫咪照片</div><div class="s-size">kitty.jpg · 1.8MB</div></div>
               <div class="s-btn">用这张 →</div>
@@ -699,28 +739,92 @@ function selectInput(idx){
   });
   const voiceArea = document.getElementById('voiceArea');
   const themeArea = document.getElementById('themeArea');
+  const uploadArea = document.getElementById('uploadArea');
   const sampleTitle = document.getElementById('sampleTitle');
   const sampleCards = document.getElementById('sampleCards');
 
   if(idx===1){
     voiceArea.classList.add('show');
+    uploadArea.classList.remove('show');
     themeArea.style.display='none';
     sampleTitle.style.display='none';
     sampleCards.style.display='none';
     document.querySelector('.bb-hint').textContent='已选择：🎙️ 语音输入';
   } else if(idx===0){
     voiceArea.classList.remove('show');
+    uploadArea.classList.add('show');
     themeArea.style.display='none';
     sampleTitle.style.display='';
     sampleCards.style.display='';
     document.querySelector('.bb-hint').textContent='已选择：📸 拍照上传';
   } else {
     voiceArea.classList.remove('show');
+    uploadArea.classList.remove('show');
     themeArea.style.display='';
     sampleTitle.style.display='';
     sampleCards.style.display='';
     document.querySelector('.bb-hint').textContent='已选择：🏰 童话城堡';
   }
+}
+
+function handleUpload(input){
+  const file=input.files&&input.files[0];
+  if(file) showUploadPreview(file.name,file.size,URL.createObjectURL(file));
+}
+
+function showUploadPreview(name,size,url){
+  document.getElementById('previewImg').src=url;
+  document.getElementById('previewName').textContent=name||'photo.jpg';
+  document.getElementById('previewMeta').textContent='✓ 上传成功 · '+fmtSize(size);
+  document.getElementById('uploadDrop').style.display='none';
+  const pv=document.getElementById('uploadPreview');
+  pv.classList.add('show');
+  const bar=pv.querySelector('.up-bar span');
+  bar.style.width='0'; void bar.offsetWidth; bar.style.width='100%';
+  document.querySelector('.bb-hint').textContent='已选择：📸 '+(name||'photo.jpg');
+}
+
+function removeUpload(){
+  document.getElementById('fileInput').value='';
+  document.getElementById('uploadPreview').classList.remove('show');
+  document.getElementById('uploadDrop').style.display='';
+  document.querySelector('.bb-hint').textContent='已选择：📸 拍照上传';
+}
+
+function fmtSize(b){
+  if(typeof b==='string') return b;
+  if(!b) return '已就绪';
+  const kb=b/1024;
+  return kb>=1024 ? (kb/1024).toFixed(1)+'MB' : Math.max(1,Math.round(kb))+'KB';
+}
+
+// 拖拽上传支持
+(function initDrop(){
+  const drop=document.getElementById('uploadDrop');
+  if(!drop) return;
+  ['dragenter','dragover'].forEach(ev=>drop.addEventListener(ev,e=>{
+    e.preventDefault();drop.classList.add('dragover');
+  }));
+  ['dragleave','drop'].forEach(ev=>drop.addEventListener(ev,e=>{
+    e.preventDefault();drop.classList.remove('dragover');
+  }));
+  drop.addEventListener('drop',e=>{
+    const file=e.dataTransfer&&e.dataTransfer.files&&e.dataTransfer.files[0];
+    if(file&&file.type.startsWith('image/')) showUploadPreview(file.name,file.size,URL.createObjectURL(file));
+  });
+})();
+
+// 示例素材：把 emoji 画成一张图片，复用上传预览
+function useSample(emoji,name,size){
+  selectInput(0);
+  const c=document.createElement('canvas');c.width=c.height=128;
+  const ctx=c.getContext('2d');
+  const g=ctx.createLinearGradient(0,0,128,128);
+  g.addColorStop(0,'#2a1860');g.addColorStop(1,'#1a1040');
+  ctx.fillStyle=g;ctx.fillRect(0,0,128,128);
+  ctx.font='74px serif';ctx.textAlign='center';ctx.textBaseline='middle';
+  ctx.fillText(emoji,64,72);
+  showUploadPreview(name,size,c.toDataURL());
 }
 
 function selectTheme(el){
