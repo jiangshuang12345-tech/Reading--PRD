@@ -200,10 +200,12 @@ body::before{content:'';position:fixed;inset:0;pointer-events:none;z-index:-1;
 
 .reader-main{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:24px 32px;position:relative;overflow:hidden}
 .rd-illust{width:100%;max-width:480px;height:240px;border-radius:16px;margin-bottom:20px;position:relative;overflow:hidden}
-.rd-illust .scene-bg{position:absolute;inset:0}
-.rd-illust .scene-img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
-.rd-illust .scene-emoji{display:none}
-.rd-illust .stars{display:none}
+.rd-illust .scene-bg{position:absolute;inset:0;transition:opacity .6s}
+.rd-illust .scene-img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:0;transition:opacity .5s}
+.rd-illust .scene-img.show{opacity:1}
+.rd-illust .scene-emoji{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
+  font-size:64px;text-shadow:0 8px 32px rgba(0,0,0,.4);transition:opacity .5s,transform .5s}
+.rd-illust .stars span{position:absolute;width:2px;height:2px;background:#fff;border-radius:50%;opacity:.5}
 .rd-text{font-size:18px;font-weight:500;max-width:500px;text-align:center;line-height:1.8;margin-bottom:6px;
   transition:opacity .4s;letter-spacing:-.2px}
 .rd-text .w{cursor:pointer;border-bottom:2px solid transparent;transition:.2s;padding:0 1px}
@@ -236,7 +238,28 @@ body::before{content:'';position:fixed;inset:0;pointer-events:none;z-index:-1;
 .rd-dmsg{flex:1;font-size:12px;color:var(--t2);line-height:1.5}
 .rd-dmsg strong{color:var(--t1)}
 .rd-action{background:linear-gradient(135deg,var(--p),#9333ea);color:#fff;border:none;border-radius:8px;
-  padding:8px 14px;font-size:11px;font-weight:600;cursor:pointer;white-space:nowrap}
+  padding:8px 14px;font-size:11px;font-weight:600;cursor:pointer;white-space:nowrap;transition:.2s;user-select:none}
+.rd-action:hover{transform:translateY(-1px);box-shadow:0 4px 14px rgba(124,92,252,.4)}
+.rd-action:active{transform:scale(.95)}
+.rd-action.recording{background:linear-gradient(135deg,#ef4444,#dc2626);animation:recPulse 1s infinite}
+@keyframes recPulse{0%,100%{box-shadow:0 0 0 0 rgba(239,68,68,.5)}50%{box-shadow:0 0 0 6px rgba(239,68,68,0)}}
+.rec-dots{display:inline-flex;gap:3px;margin-left:6px;vertical-align:middle}
+.rec-dots i{width:4px;height:4px;border-radius:50%;background:#ef4444;animation:recDot 1s infinite}
+.rec-dots i:nth-child(2){animation-delay:.2s}.rec-dots i:nth-child(3){animation-delay:.4s}
+@keyframes recDot{0%,100%{opacity:.3;transform:translateY(0)}50%{opacity:1;transform:translateY(-3px)}}
+.dino-input{display:none;align-items:center;gap:8px;padding:10px 24px;background:var(--s1);
+  border-top:1px solid var(--border);flex-shrink:0;animation:slideUp .25s ease}
+.dino-input.show{display:flex}
+@keyframes slideUp{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+.dino-input input{flex:1;background:var(--s2);border:1.5px solid var(--border2);border-radius:10px;
+  padding:9px 14px;color:var(--t1);font-size:12px;font-family:var(--font);outline:none}
+.dino-input input:focus{border-color:var(--p)}
+.di-send{background:linear-gradient(135deg,var(--p),#9333ea);color:#fff;border:none;border-radius:10px;
+  padding:9px 16px;font-size:11px;font-weight:600;cursor:pointer;white-space:nowrap;transition:.2s}
+.di-send:hover{transform:translateY(-1px)}
+.di-close{background:var(--s2);border:1px solid var(--border);color:var(--t3);border-radius:10px;
+  width:32px;height:32px;font-size:12px;cursor:pointer;flex-shrink:0}
+.di-close:hover{color:var(--t1)}
 
 /* ═══ SCREEN 5: COMPLETE ═══ */
 .s5-content{display:flex;flex-direction:column;align-items:center;padding:32px;text-align:center;height:100%;overflow-y:auto}
@@ -563,10 +586,15 @@ body::before{content:'';position:fixed;inset:0;pointer-events:none;z-index:-1;
         <div class="pg-num" id="pgNum">1 / 8</div>
         <div class="pg-arrow" id="nextPage" onclick="changePage(1)">›</div>
       </div>
+      <div class="dino-input" id="dinoInput">
+        <input type="text" id="dinoAnswerField" placeholder="说说你的想法…" onkeydown="if(event.key==='Enter')sendAnswer()">
+        <button class="di-send" id="dinoSend" onclick="sendAnswer()">发送 ➤</button>
+        <button class="di-close" id="dinoClose" onclick="closeAnswer()">✕</button>
+      </div>
       <div class="reader-dino">
         <div class="rd-avatar">🦖</div>
         <div class="rd-dmsg" id="dinMsg"><strong>Dino：</strong><span id="dinTxt">"这个故事的主角是谁呀？"</span></div>
-        <div class="rd-action" id="dinAction">🎤 跟读</div>
+        <div class="rd-action" id="dinAction" onclick="dinoInteract()">🎤 跟读</div>
       </div>
     </div>
 
@@ -802,8 +830,6 @@ function startGenAnimation(){
 // ═══════════════════════════════════════
 //  SCREEN 4: READER
 // ═══════════════════════════════════════
-for(let i=1;i<=8;i++){const im=new Image();im.src='assets/page'+i+'.png';}
-
 function initReader(){
   currentPage=0;
   showTrans=false;
@@ -815,13 +841,21 @@ function initReader(){
 
 function renderPage(){
   const pg=pages[currentPage];
+  document.getElementById('sceneEmoji').textContent=pg.emoji;
   document.getElementById('sceneBg').style.background=pg.bg;
-  document.getElementById('sceneImg').src='assets/page'+(currentPage+1)+'.png';
+  const sceneImg=document.getElementById('sceneImg');
+  sceneImg.classList.remove('show');
+  sceneImg.src='assets/page'+(currentPage+1)+'.png';
+  sceneImg.onload=()=>sceneImg.classList.add('show');
   document.getElementById('rdText').innerHTML=pg.en;
   document.getElementById('rdTrans').textContent=pg.zh;
   document.getElementById('pgNum').textContent=(currentPage+1)+' / '+pages.length;
   document.getElementById('dinTxt').textContent=pg.dino;
-  document.getElementById('dinAction').textContent=pg.action;
+  const dinAction=document.getElementById('dinAction');
+  dinAction.textContent=pg.action;
+  dinAction.classList.remove('recording');
+  delete dinAction.dataset.busy;
+  closeAnswer();
   document.getElementById('prevPage').classList.toggle('disabled',currentPage===0);
   document.getElementById('wordTip').classList.remove('show');
 
@@ -861,6 +895,55 @@ function changePage(dir){
   if(next>=pages.length){goStep(5);return}
   currentPage=next;
   renderPage();
+}
+
+// ═══ READER · Dino 互动 ═══
+function setDino(msg){document.getElementById('dinTxt').textContent=msg;}
+
+function dinoInteract(){
+  const act=pages[currentPage].action;
+  if(act.includes('完成')){goStep(5);return}
+  if(act.includes('跟读')){startRecording();return}
+  if(act.includes('回答')){openAnswer();return}
+  // 👍 知道了 等
+  const praises=['👍 真棒！记住这个用法啦～','🌟 你真聪明！我们继续读吧～','🎉 太厉害了，学得真快！'];
+  setDino(praises[Math.floor(Math.random()*praises.length)]);
+}
+
+function startRecording(){
+  const btn=document.getElementById('dinAction');
+  if(btn.dataset.busy)return;
+  btn.dataset.busy='1';
+  btn.classList.add('recording');
+  btn.textContent='⏺ 录音中';
+  document.getElementById('dinTxt').innerHTML='🎙️ 录音中…大声跟我读这一页吧！<span class="rec-dots"><i></i><i></i><i></i></span>';
+  setTimeout(()=>{
+    const score=88+Math.floor(Math.random()*11);
+    const tip=score>=96?'发音超完美！':(score>=92?'发音很标准！':'读得不错，继续加油！');
+    document.getElementById('dinTxt').innerHTML='🌟 发音得分 <strong style="color:#34d399">'+score+'</strong> 分！'+tip;
+    btn.classList.remove('recording');
+    btn.textContent='🎤 再读一遍';
+    delete btn.dataset.busy;
+  },2000);
+}
+
+function openAnswer(){
+  document.getElementById('dinoInput').classList.add('show');
+  const f=document.getElementById('dinoAnswerField');
+  f.value='';
+  setTimeout(()=>f.focus(),50);
+}
+function closeAnswer(){
+  const el=document.getElementById('dinoInput');
+  if(el)el.classList.remove('show');
+}
+function sendAnswer(){
+  const f=document.getElementById('dinoAnswerField');
+  const val=(f.value||'').trim();
+  if(!val){f.focus();return}
+  closeAnswer();
+  const replies=['💡 说得真好！你观察得很仔细～','😄 很有想法！就是这样读故事的～','👏 回答得棒极了，我们继续吧！'];
+  setDino(replies[Math.floor(Math.random()*replies.length)]);
 }
 
 function toggleTrans(){
